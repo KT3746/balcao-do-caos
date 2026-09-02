@@ -98,7 +98,7 @@ export function createRun(): Run {
     lives: START_LIVES,
     turno: 1,
     turnoT: 0,
-    spawnIn: 0.7,
+    spawnIn: 1.15,
     customers: [],
     holding: null,
     chaos: null,
@@ -126,11 +126,11 @@ export function maxSlotsFor(turno: number): number {
 }
 
 export function spawnInterval(turno: number): number {
-  return Math.max(1.55, 4.35 - turno * 0.55) + Math.random() * 0.55;
+  return Math.max(1.7, 5.15 - turno * 0.62) + Math.random() * 0.5;
 }
 
 export function patienceFor(turno: number, items: number, special: boolean): number {
-  const base = Math.max(6.6, 15.4 - turno * 2.05);
+  const base = Math.max(7.2, 18.2 - turno * 2.15);
   const extra = (items - 1) * 3.1;
   return (base + extra) * (special ? 0.72 : 1);
 }
@@ -191,6 +191,10 @@ export function spawnCustomer(run: Run): SimEvent | null {
     phraseT: 2.6,
     special,
   };
+  if (run.first) {
+    c.patienceMax *= 1.4;
+    c.patience = c.patienceMax;
+  }
   run.customers.push(c);
   run.first = false;
   run.spawnIn = spawnInterval(run.turno);
@@ -355,7 +359,8 @@ export function tick(run: Run, dt: number): SimEvent[] {
   if (shift) events.push(shift);
 
   run.spawnIn -= simDt;
-  if (run.spawnIn <= 0) {
+  const holdFirst = run.served === 0 && run.t < 11 && run.customers.length >= 1;
+  if (run.spawnIn <= 0 && !holdFirst) {
     const ev = spawnCustomer(run);
     if (ev) events.push(ev);
     else run.spawnIn = 0.45;

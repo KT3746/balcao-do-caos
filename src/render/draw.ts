@@ -317,7 +317,7 @@ function drawCustomer(ctx: CanvasRenderingContext2D, c: Customer, layout: PlayLa
   ctx.fillText(c.special ? `${arch.name} ★` : arch.name, slot.x + slot.w / 2 + ox, barY + 22, slot.w - 8);
 
   const bubbleW = slot.w - 8;
-  const bubbleH = Math.min(72, slot.h * 0.34);
+  const bubbleH = Math.min(88, Math.max(58, slot.h * 0.4));
   const bx = slot.x + 4 + ox;
   const by = slot.y + 28 + oy;
   ctx.fillStyle = c.mood === "rage" ? "#f3d0c6" : "#fff8ea";
@@ -326,10 +326,14 @@ function drawCustomer(ctx: CanvasRenderingContext2D, c: Customer, layout: PlayLa
   ctx.strokeStyle = "rgba(42,29,18,0.2)";
   ctx.stroke();
   const need = c.order;
-  const icon = Math.min(28, (bubbleW - 12) / Math.max(1, need.length) - 4);
+  const icon = Math.min(34, (bubbleW - 10) / Math.max(1, need.length) - 6);
   need.forEach((id, i) => {
-    const ix = bx + bubbleW / 2 + (i - (need.length - 1) / 2) * (icon + 10);
-    drawProduct(ctx, id, ix, by + bubbleH * 0.42, icon * 0.7, t, false);
+    const ix = bx + bubbleW / 2 + (i - (need.length - 1) / 2) * (icon + 12);
+    drawProduct(ctx, id, ix, by + bubbleH * 0.38, icon * 0.78, t, false);
+    ctx.fillStyle = "#2a1d12";
+    ctx.font = `800 ${Math.max(9, Math.min(12, bubbleW * 0.12))}px Nunito, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(PRODUCT_BY_ID[id].short, ix, by + bubbleH - 8, icon + 10);
   });
   if (need.length === 0) {
     ctx.fillStyle = "#2f6b4f";

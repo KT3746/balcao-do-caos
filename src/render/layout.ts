@@ -25,9 +25,9 @@ export function contains(r: Rect, x: number, y: number, pad = 0): boolean {
 }
 
 export function computeLayout(w: number, h: number, turno: number, slotCount: number): PlayLayout {
-  const landscape = w > h * 1.12;
+  const landscape = w > h * 1.12 && h < 620;
   const safeT = 8;
-  const hudH = landscape ? 52 : 58;
+  const hudH = landscape ? 56 : 72;
   const hud: Rect = { x: 0, y: 0, w, h: hudH };
   const maxSlots = Math.max(2, slotCount);
 

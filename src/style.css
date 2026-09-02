@@ -72,6 +72,12 @@ body.is-play {
   pointer-events: auto;
 }
 
+#hud[hidden],
+#toast[hidden],
+#banner[hidden] {
+  display: none !important;
+}
+
 #hud {
   position: fixed;
   top: 0;
