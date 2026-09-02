@@ -305,8 +305,8 @@ function drawCustomer(ctx: CanvasRenderingContext2D, c: Customer, layout: PlayLa
   ctx.restore();
 
   const barH = 12;
-  const barW = slot.w - 16;
-  const barX = slot.x + 8 + ox;
+  const barW = Math.min(slot.w - 16, 132);
+  const barX = slot.x + (slot.w - barW) / 2 + ox;
   const barY = slot.y + 8 + oy;
   ctx.fillStyle = "rgba(42,29,18,0.7)";
   roundRect(ctx, barX, barY, barW, barH, 6);
