@@ -8,7 +8,8 @@ export type UiAction =
   | { type: "quit" }
   | { type: "retry" }
   | { type: "mute" }
-  | { type: "menu" };
+  | { type: "menu" }
+  | { type: "begin" };
 
 export class Screens {
   root: HTMLElement;
@@ -37,9 +38,9 @@ export class Screens {
         <div class="screen-body">
           <div class="topbar">
             <div class="brand">
-              <div class="eyebrow">Lojinha original</div>
+              <div class="eyebrow">Mercadinho do Caos</div>
               <h1>Balcão do Caos</h1>
-              <p class="lede">No Mercadinho do Caos, clientes pedem. Você pega o produto certo. A paciência acaba primeiro — a não ser que você seja mais rápido.</p>
+              <p class="lede">Clientes pedem. Você pega o produto certo. A paciência acaba primeiro — a não ser que você seja mais rápido.</p>
               ${best > 0 ? `<p class="best">Recorde local: <b>${best}</b></p>` : ""}
             </div>
             <button type="button" class="icon-btn mute-btn" data-act="mute" aria-label="${muted ? "Ativar som" : "Mudo"}">${muted ? "Som off" : "Som"}</button>
@@ -90,6 +91,25 @@ export class Screens {
         </div>
         <div class="screen-foot">
           <button type="button" class="btn primary" data-act="back">Voltar</button>
+        </div>
+      </section>`);
+  }
+
+  intro(): void {
+    this.set(`
+      <section class="overlay intro-overlay">
+        <div class="panel">
+          <div class="eyebrow">Mercadinho do Caos</div>
+          <h2>Balcão do Caos</h2>
+          <p class="lede">A fila só anda quando você fechar este recado. Ninguém perde vida enquanto lê.</p>
+          <div class="sheet">
+            <p><b>1.</b> Toque no produto na prateleira — ou arraste até a pessoa.</p>
+            <p><b>2.</b> Toque no cliente para entregar. O pedido está no balão.</p>
+            <p><b>3.</b> Três clientes furiosos encerram o expediente. O ritmo sobe depois.</p>
+          </div>
+          <div class="stack">
+            <button type="button" class="btn primary" data-act="begin">Entendi — abrir o caixa</button>
+          </div>
         </div>
       </section>`);
   }

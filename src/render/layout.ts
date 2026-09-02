@@ -1,3 +1,4 @@
+import { HUD_H_LANDSCAPE, HUD_H_PORTRAIT } from "../config";
 import { productsUnlocked } from "../data/catalog";
 import type { ProductId } from "../types";
 
@@ -25,19 +26,28 @@ export function contains(r: Rect, x: number, y: number, pad = 0): boolean {
 }
 
 export function measureHudHeight(landscape: boolean): number {
-  if (typeof document === "undefined") return landscape ? 84 : 110;
+  const fallback = landscape ? HUD_H_LANDSCAPE : HUD_H_PORTRAIT;
+  if (typeof document === "undefined") return fallback;
   const el = document.getElementById("hud");
   if (el && !el.hidden) {
     const box = el.getBoundingClientRect().height;
-    if (box > 40) return Math.ceil(box) + 8;
+    if (box > 40) return Math.max(fallback, Math.ceil(box) + 8);
   }
-  return landscape ? 84 : 110;
+  let safe = 0;
+  try {
+    const pad = getComputedStyle(document.documentElement).getPropertyValue("--safe-t");
+    const n = Number.parseFloat(pad);
+    if (Number.isFinite(n)) safe = n;
+  } catch {
+    safe = 0;
+  }
+  return fallback + safe;
 }
 
-export function computeLayout(w: number, h: number, turno: number, slotCount: number): PlayLayout {
+export function computeLayout(w: number, h: number, turno: number, slotCount: number, hudBand?: number): PlayLayout {
   const landscape = w > h * 1.12 && h < 620;
   const safeT = 8;
-  const hudH = measureHudHeight(landscape);
+  const hudH = hudBand && hudBand > 40 ? hudBand : measureHudHeight(landscape);
   const hud: Rect = { x: 0, y: 0, w, h: hudH };
   const maxSlots = Math.max(1, slotCount);
 

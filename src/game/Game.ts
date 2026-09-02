@@ -1,5 +1,5 @@
 import { Sfx } from "../audio/sfx";
-import { BUILD_ID, SHOP_NAME } from "../config";
+import { BUILD_ID, GAME_TITLE, HUD_H_LANDSCAPE, HUD_H_PORTRAIT, SHOP_NAME } from "../config";
 import { TOASTS, productsUnlocked } from "../data/catalog";
 import { createRun, floatText, livesGlyph, maxSlotsFor, tick, toastFor, tryDeliver, tryPickup, type Run, type SimEvent } from "./sim";
 import { loadSave, writeSave } from "../persist";
@@ -31,6 +31,8 @@ export class Game {
   private pointerId: number | null = null;
   private cssW = 0;
   private cssH = 0;
+  private layoutKey = "";
+  private hudBand = 0;
 
   constructor(canvas: HTMLCanvasElement, uiRoot: HTMLElement) {
     const ctx = canvas.getContext("2d", { alpha: false });
@@ -46,7 +48,9 @@ export class Game {
     this.hud = document.getElementById("hud")!;
     this.hurtEl = document.getElementById("hurt");
     const shop = document.getElementById("hud-shop");
-    if (shop) shop.textContent = SHOP_NAME;
+    if (shop) shop.textContent = GAME_TITLE;
+    const sub = document.getElementById("hud-sub");
+    if (sub) sub.textContent = SHOP_NAME;
     this.bind();
     this.showTitle();
     window.addEventListener("resize", () => this.resize());
@@ -116,8 +120,10 @@ export class Game {
 
   private onDown(e: PointerEvent): void {
     if (this.view !== "play" || !this.run || !this.layout) return;
+    if (this.run.tutorial || this.run.over) return;
     if (e.button !== 0 && e.pointerType === "mouse") return;
     void this.audio.unlock();
+    this.run.lockQueue = true;
     const p = this.pos(e);
     const cust = hitCustomer(this.layout, this.run, p.x, p.y);
     const prod = hitProduct(this.layout, this.run, p.x, p.y);
@@ -167,7 +173,10 @@ export class Game {
   }
 
   private onUp(e: PointerEvent): void {
-    if (this.view !== "play" || !this.run || !this.layout) return;
+    if (this.view !== "play" || !this.run || !this.layout) {
+      this.clearDrag();
+      return;
+    }
     if (this.dragging && e.pointerId === this.pointerId) {
       const p = this.pos(e);
       const cust = hitCustomer(this.layout, this.run, p.x, p.y);
@@ -180,10 +189,11 @@ export class Game {
     this.dragging = null;
     this.pointerId = null;
     this.ghost = null;
+    if (this.run) this.run.lockQueue = false;
   }
 
   private deliver(customerId: number, at: { x: number; y: number }): void {
-    if (!this.run) return;
+    if (!this.run || this.run.tutorial) return;
     const ev = tryDeliver(this.run, customerId, {
       x: at.x / Math.max(1, this.cssW),
       y: at.y / Math.max(1, this.cssH),
@@ -194,6 +204,7 @@ export class Game {
 
   private onKey(e: KeyboardEvent): void {
     if (e.code === "Escape") {
+      if (this.view === "play" && this.run?.tutorial) return;
       if (this.view === "play") this.pause();
       else if (this.view === "paused") this.resume();
       return;
@@ -202,7 +213,7 @@ export class Game {
       this.handle({ type: "mute" });
       return;
     }
-    if (this.view !== "play" || !this.run || !this.layout) return;
+    if (this.view !== "play" || !this.run || !this.layout || this.run.tutorial) return;
     const order = this.run.shelfOrder;
     const ids =
       order.length === this.layout.cells.length ? order.slice() : this.layout.cells.map((c) => c.id);
@@ -300,8 +311,10 @@ export class Game {
   private tick(dt: number): void {
     this.resizeIfNeeded();
     if (this.view === "play" && this.run) {
-      this.layout = computeLayout(this.cssW, this.cssH, this.run.turno, maxSlotsFor(this.run.turno));
+      this.ensureLayout();
+      const beforeTurno = this.run.turno;
       const events = tick(this.run, dt);
+      if (this.run.turno !== beforeTurno) this.ensureLayout(true);
       for (const ev of events) this.applyEvent(ev);
       if (this.run.over && this.view === "play") this.finish();
       this.syncHud();
@@ -363,7 +376,23 @@ export class Game {
     this.canvas.style.width = `${w}px`;
     this.canvas.style.height = `${h}px`;
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
-    if (this.run) this.layout = computeLayout(w, h, this.run.turno, maxSlotsFor(this.run.turno));
+    this.hudBand = 0;
+    if (!this.hud.hidden) {
+      const box = this.hud.getBoundingClientRect().height;
+      if (box > 40) this.hudBand = Math.ceil(box) + 8;
+    }
+    this.ensureLayout(true);
+  }
+
+  private ensureLayout(force = false): void {
+    if (!this.run) return;
+    const landscape = this.cssW > this.cssH * 1.12 && this.cssH < 620;
+    const band = this.hudBand || (landscape ? HUD_H_LANDSCAPE : HUD_H_PORTRAIT);
+    const slots = maxSlotsFor(this.run.turno);
+    const key = `${this.cssW}x${this.cssH}:${this.run.turno}:${slots}:${band}`;
+    if (!force && this.layout && this.layoutKey === key) return;
+    this.layoutKey = key;
+    this.layout = computeLayout(this.cssW, this.cssH, this.run.turno, slots, band);
   }
 
   private showTitle(): void {
@@ -377,17 +406,33 @@ export class Game {
     this.run = createRun();
     this.selected = null;
     this.view = "play";
-    this.ui.root.innerHTML = "";
     this.save.plays += 1;
     writeSave(this.save);
+    this.ui.intro();
     this.syncChrome();
     this.resize();
     this.syncHud();
     this.audio.shift();
   }
 
+  private beginShift(): void {
+    if (!this.run?.tutorial) return;
+    this.run.tutorial = false;
+    this.run.lockQueue = false;
+    this.run.spawnIn = 0.55;
+    this.run.hint = "Toque no produto, depois no cliente. Ou arraste.";
+    this.run.hintT = 7;
+    this.run.banner = "A loja abriu.";
+    this.run.bannerT = 2;
+    this.ui.root.innerHTML = "";
+    this.syncChrome();
+    this.resize();
+    this.audio.shift();
+  }
+
   private pause(): void {
-    if (this.view !== "play") return;
+    if (this.view !== "play" || this.run?.tutorial) return;
+    this.clearDrag();
     this.view = "paused";
     this.ui.pause(this.save.muted);
     this.syncChrome();
@@ -447,6 +492,9 @@ export class Game {
       case "retry":
         this.play();
         break;
+      case "begin":
+        this.beginShift();
+        break;
       case "mute": {
         const muted = this.audio.toggleMute();
         this.save.muted = muted;
@@ -464,9 +512,10 @@ export class Game {
 
   private syncChrome(): void {
     const playing = this.view === "play";
-    document.body.classList.toggle("is-play", playing);
+    const showHud = playing && !!this.run && !this.run.tutorial;
+    document.body.classList.toggle("is-play", playing && !this.run?.tutorial);
     document.body.dataset.view = this.view;
-    this.hud.hidden = !playing;
+    this.hud.hidden = !showHud;
     if (!playing) {
       this.bannerEl.hidden = true;
       this.toastEl.hidden = true;

@@ -627,9 +627,20 @@ export function hitProduct(layout: PlayLayout, run: Run, x: number, y: number): 
 }
 
 export function hitCustomer(layout: PlayLayout, run: Run, x: number, y: number): number | null {
-  for (const c of run.customers) {
+  let bestId: number | null = null;
+  let bestD = Infinity;
+  for (let i = run.customers.length - 1; i >= 0; i--) {
+    const c = run.customers[i]!;
+    if (c.mood !== "wait" && c.mood !== "enter") continue;
     const r = layout.slots[c.slot];
-    if (r && contains(r, x, y, 4) && (c.mood === "wait" || c.mood === "enter")) return c.id;
+    if (!r || !contains(r, x, y, 6)) continue;
+    const cx = r.x + r.w / 2;
+    const cy = r.y + r.h * 0.62;
+    const d = (x - cx) * (x - cx) + (y - cy) * (y - cy);
+    if (d < bestD) {
+      bestD = d;
+      bestId = c.id;
+    }
   }
-  return null;
+  return bestId;
 }
