@@ -1,7 +1,7 @@
 export const GAME_TITLE = "Balcão do Caos";
 export const SHOP_NAME = "Mercadinho do Caos";
-export const HUD_H_PORTRAIT = 124;
-export const HUD_H_LANDSCAPE = 100;
+export const HUD_H_PORTRAIT = 168;
+export const HUD_H_LANDSCAPE = 108;
 export const SAVE_KEY = "balcao-do-caos-v1";
 export const TOUCH_VIEWPORT_MAX = 820;
 export const START_LIVES = 3;

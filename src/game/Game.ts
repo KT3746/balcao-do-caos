@@ -420,13 +420,14 @@ export class Game {
     this.run.tutorial = false;
     this.run.lockQueue = false;
     this.run.spawnIn = 0.55;
-    this.run.hint = "Toque no produto, depois no cliente. Ou arraste.";
-    this.run.hintT = 7;
+    this.run.hint = null;
+    this.run.hintT = 0;
     this.run.banner = "A loja abriu.";
     this.run.bannerT = 2;
     this.ui.root.innerHTML = "";
     this.syncChrome();
     this.resize();
+    this.toast("Toque no produto, depois no cliente. Ou arraste.", 4200);
     this.audio.shift();
   }
 

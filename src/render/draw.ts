@@ -581,10 +581,10 @@ function drawParticles(ctx: CanvasRenderingContext2D, parts: Particle[], layout:
 }
 
 function drawHint(ctx: CanvasRenderingContext2D, layout: PlayLayout, text: string): void {
-  ctx.fillStyle = "rgba(42,29,18,0.82)";
+  ctx.fillStyle = "rgba(42,29,18,0.86)";
   const w = Math.min(layout.w - 24, 420);
   const x = (layout.w - w) / 2;
-  const y = layout.counter.y - 36;
+  const y = layout.shelves.y + layout.shelves.h - 34;
   roundRect(ctx, x, y, w, 28, 14);
   ctx.fill();
   ctx.fillStyle = "#f7ecd4";
