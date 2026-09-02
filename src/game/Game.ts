@@ -555,12 +555,17 @@ export class Game {
     this.canvas.style.width = `${w}px`;
     this.canvas.style.height = `${h}px`;
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    this.remeasureHud(true);
+  }
+
+  /** Recalcula a faixa do HUD (ex.: painel "Na mão" aparece e o HUD cresce para baixo). */
+  private remeasureHud(forceLayout = false): void {
     this.hudBand = 0;
     if (!this.hud.hidden) {
       const box = this.hud.getBoundingClientRect().height;
       if (box > 40) this.hudBand = Math.ceil(box) + 8;
     }
-    this.ensureLayout(true);
+    this.ensureLayout(forceLayout);
   }
 
   private ensureLayout(force = false): void {
@@ -740,6 +745,7 @@ export class Game {
     const hand = document.getElementById("hud-hand");
     const handName = document.getElementById("hud-hand-name");
     if (hand && handName) {
+      const wasHidden = hand.hidden;
       if (this.run.holding) {
         hand.hidden = false;
         handName.textContent = PRODUCT_BY_ID[this.run.holding].short;
@@ -747,6 +753,7 @@ export class Game {
         hand.hidden = true;
         handName.textContent = "—";
       }
+      if (wasHidden !== hand.hidden) this.remeasureHud(true);
     }
   }
 
