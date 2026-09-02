@@ -1,6 +1,6 @@
 # Balcão do Caos
 
-Atenda o **Mercadinho Relâmpago** antes da paciência da fila acabar. Jogo **original** no navegador — nenhuma marca real, mascote emprestado ou IP de terceiros.
+Atenda o **Mercadinho do Caos** antes da paciência da fila acabar. Jogo **original** no navegador — nenhuma marca real, mascote emprestado ou IP de terceiros.
 
 **Jogar agora:** [https://kt3746.github.io/balcao-do-caos/](https://kt3746.github.io/balcao-do-caos/)
 
@@ -68,7 +68,7 @@ npm run preview
 
 O workflow em `.github/workflows/deploy.yml` gera o site e publica no GitHub Pages a cada push em `main`. Assets saem com hash no nome; o `index.html` leva um `build-id` e `dist/version.txt` com o commit — isso evita ficar preso numa versão antiga no cache.
 
-Pages já está em **GitHub Actions**. Depois do merge em `main`, o endereço é [https://kt3746.github.io/balcao-do-caos/](https://kt3746.github.io/balcao-do-caos/).
+Pages já está em **GitHub Actions**. Depois do merge em `main`, o endereço é [https://kt3746.github.io/balcao-do-caos/](https://kt3746.github.io/balcao-do-caos/). Se o navegador mostrar a versão antiga, abra com `?v=` + o SHA do commit (está em `dist/version.txt` e no meta `build-id` da página), por exemplo `https://kt3746.github.io/balcao-do-caos/?v=abc123`.
 
 ## Licença
 

@@ -1,5 +1,5 @@
 import { Sfx } from "../audio/sfx";
-import { BUILD_ID } from "../config";
+import { BUILD_ID, SHOP_NAME } from "../config";
 import { TOASTS, productsUnlocked } from "../data/catalog";
 import { createRun, floatText, livesGlyph, maxSlotsFor, tick, toastFor, tryDeliver, tryPickup, type Run, type SimEvent } from "./sim";
 import { loadSave, writeSave } from "../persist";
@@ -25,6 +25,8 @@ export class Game {
   private toastEl: HTMLElement;
   private bannerEl: HTMLElement;
   private hud: HTMLElement;
+  private hurtEl: HTMLElement | null = null;
+  private toastTimer = 0;
   private dragging: ProductId | null = null;
   private pointerId: number | null = null;
   private cssW = 0;
@@ -42,6 +44,9 @@ export class Game {
     this.toastEl = document.getElementById("toast")!;
     this.bannerEl = document.getElementById("banner")!;
     this.hud = document.getElementById("hud")!;
+    this.hurtEl = document.getElementById("hurt");
+    const shop = document.getElementById("hud-shop");
+    if (shop) shop.textContent = SHOP_NAME;
     this.bind();
     this.showTitle();
     window.addEventListener("resize", () => this.resize());
@@ -270,7 +275,11 @@ export class Game {
         break;
       case "rage":
         this.audio.slam();
-        this.toast(`${ev.name} foi embora.`);
+        this.toast(
+          `${ev.name} foi embora — você perdeu uma vida. Restam ${Math.max(0, this.run.lives)}.`,
+          2400,
+        );
+        this.flashLifeLost();
         break;
       case "shift":
         this.audio.shift();
@@ -371,8 +380,8 @@ export class Game {
     this.ui.root.innerHTML = "";
     this.save.plays += 1;
     writeSave(this.save);
-    this.resize();
     this.syncChrome();
+    this.resize();
     this.syncHud();
     this.audio.shift();
   }
@@ -461,6 +470,7 @@ export class Game {
     if (!playing) {
       this.bannerEl.hidden = true;
       this.toastEl.hidden = true;
+      if (this.hurtEl) this.hurtEl.hidden = true;
     }
     this.syncMuteButtons();
   }
@@ -496,11 +506,28 @@ export class Game {
     } else this.bannerEl.hidden = true;
   }
 
-  private toast(text: string): void {
+  private toast(text: string, ms = 1600): void {
     this.toastEl.hidden = false;
     this.toastEl.textContent = text;
-    window.setTimeout(() => {
+    window.clearTimeout(this.toastTimer);
+    this.toastTimer = window.setTimeout(() => {
       if (this.toastEl.textContent === text) this.toastEl.hidden = true;
-    }, 1600);
+    }, ms);
+  }
+
+  private flashLifeLost(): void {
+    const lives = document.getElementById("hud-lives");
+    lives?.classList.remove("pulse-lost");
+    void lives?.offsetWidth;
+    lives?.classList.add("pulse-lost");
+    if (this.hurtEl) {
+      this.hurtEl.hidden = true;
+      void this.hurtEl.offsetWidth;
+      this.hurtEl.hidden = false;
+    }
+    window.setTimeout(() => {
+      lives?.classList.remove("pulse-lost");
+      if (this.hurtEl) this.hurtEl.hidden = true;
+    }, 700);
   }
 }

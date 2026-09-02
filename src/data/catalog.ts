@@ -31,7 +31,7 @@ export const PRODUCTS: readonly Product[] = [
   { id: "choco", name: "Choco-Choco", short: "Choco", shelf: "Geladeira", color: "#6b3a24", unlock: 1 },
   { id: "agua", name: "Água Borbulha", short: "Água", shelf: "Geladeira", color: "#4d8fbf", unlock: 2 },
   { id: "lua", name: "Biscoito Lua", short: "Lua", shelf: "Salgados", color: "#e3b23c", unlock: 1 },
-  { id: "raio", name: "Salgadinho Relâmpago", short: "Raio", shelf: "Salgados", color: "#d4551a", unlock: 1 },
+  { id: "raio", name: "Salgadinho Raio", short: "Raio", shelf: "Salgados", color: "#d4551a", unlock: 1 },
   { id: "pao", name: "Pão Nuvem", short: "Pão", shelf: "Padaria", color: "#f3e1c2", unlock: 1 },
   { id: "detergente", name: "Detergente Brilho", short: "Deterg.", shelf: "Limpeza", color: "#3b6fb6", lookalike: "amaciante", unlock: 1 },
   { id: "amaciante", name: "Amaciante Brilho", short: "Amac.", shelf: "Limpeza", color: "#e07a8d", lookalike: "detergente", unlock: 2 },
@@ -194,7 +194,7 @@ export const TOASTS = {
   combo: ["Combo!", "Tá voando!", "Caos controlado!"],
   rage: ["Cliente foi embora.", "A porta bateu. A paciência também."],
   gato: ["O gato da loja assumiu a prateleira.", "Miau. Tradução: não agora."],
-  apagao: ["Apagão relâmpago. Os rótulos ainda valem.", "Luz fraca, pedido igual."],
+  apagao: ["Apagão na esquina. Os rótulos ainda valem.", "Luz fraca, pedido igual."],
   liquidacao: ["Liquidação: as coisas trocaram de lugar.", "Prateleira embaralhada. Olha com carinho."],
   rush: ["Hora do rush. Respire. Depois atenda.", "Dois de uma vez. Clássico."],
 };

@@ -39,7 +39,7 @@ export class Screens {
             <div class="brand">
               <div class="eyebrow">Lojinha original</div>
               <h1>Balcão do Caos</h1>
-              <p class="lede">Clientes pedem. Você pega o produto certo. A paciência acaba primeiro — a não ser que você seja mais rápido.</p>
+              <p class="lede">No Mercadinho do Caos, clientes pedem. Você pega o produto certo. A paciência acaba primeiro — a não ser que você seja mais rápido.</p>
               ${best > 0 ? `<p class="best">Recorde local: <b>${best}</b></p>` : ""}
             </div>
             <button type="button" class="icon-btn mute-btn" data-act="mute" aria-label="${muted ? "Ativar som" : "Mudo"}">${muted ? "Som off" : "Som"}</button>

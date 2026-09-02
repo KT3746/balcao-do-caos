@@ -1,4 +1,3 @@
-import { SHOP_NAME } from "../config";
 import { ARCHETYPES, PRODUCT_BY_ID } from "../data/catalog";
 import type { Customer, Particle, Run } from "../game/sim";
 import type { ProductId } from "../types";
@@ -78,10 +77,6 @@ function paintWall(ctx: CanvasRenderingContext2D, w: number, h: number, layout: 
   ctx.fillRect(0, 0, w, h);
   ctx.fillStyle = "#b07a44";
   ctx.fillRect(0, 0, w, layout.hud.h + 6);
-  ctx.fillStyle = "#2a1d12";
-  ctx.font = `800 ${Math.max(14, Math.min(22, w * 0.035))}px Nunito, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.fillText(SHOP_NAME, w * 0.5, layout.hud.h - 10);
   // neon ABERTO
   const nx = w - 86;
   const ny = layout.hud.h + (layout.landscape ? 18 : 8);
@@ -145,10 +140,6 @@ function paintShelves(ctx: CanvasRenderingContext2D, layout: PlayLayout, run: Ru
   ctx.fillStyle = "#2f6b4f";
   roundRect(ctx, s.x, s.y, s.w, s.h, 12);
   ctx.fill();
-  ctx.fillStyle = "rgba(255,255,255,0.08)";
-  ctx.font = "800 11px Nunito, sans-serif";
-  ctx.textAlign = "left";
-  ctx.fillText("PRATELEIRAS — toque ou arraste", s.x + 12, s.y - 10);
   const cells = applyShelfOrder(layout.cells, run.shelfOrder.length === layout.cells.length ? run.shelfOrder : layout.cells.map((c) => c.id));
   for (const cell of cells) {
     const blocked = catBlocks(run, layout, cell.rect);

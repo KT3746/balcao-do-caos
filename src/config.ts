@@ -1,5 +1,5 @@
 export const GAME_TITLE = "Balcão do Caos";
-export const SHOP_NAME = "Mercadinho Relâmpago";
+export const SHOP_NAME = "Mercadinho do Caos";
 export const SAVE_KEY = "balcao-do-caos-v1";
 export const TOUCH_VIEWPORT_MAX = 820;
 export const START_LIVES = 3;
