@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#2a1d12" />
+    <meta
+      name="description"
+      content="Balcão do Caos — atenda clientes numa lojinha original antes da paciência acabar."
+    />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Balcão do Caos</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene" aria-label="Área do jogo: clientes, balcão e prateleiras"></canvas>
+      <div id="hud" hidden>
+        <div class="hud-cluster left">
+          <div class="hud-label">Pontos</div>
+          <div id="hud-score">0</div>
+          <div id="hud-combo" class="combo" hidden></div>
+        </div>
+        <div class="hud-cluster mid">
+          <div id="hud-turno">Turno 1</div>
+          <div id="hud-lives" aria-label="Vidas">❤❤❤</div>
+        </div>
+        <div class="hud-cluster right">
+          <button type="button" class="icon-btn" id="btn-pause" data-act="pause" aria-label="Pausar">Pausa</button>
+          <button type="button" class="icon-btn" id="btn-mute" data-act="mute" aria-label="Som">Som</button>
+        </div>
+      </div>
+      <div id="toast" hidden></div>
+      <div id="banner" hidden></div>
+      <div id="ui"></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

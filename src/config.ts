@@ -1,0 +1,60 @@
+export const GAME_TITLE = "Balcão do Caos";
+export const SHOP_NAME = "Mercadinho Relâmpago";
+export const SAVE_KEY = "balcao-do-caos-v1";
+export const TOUCH_VIEWPORT_MAX = 820;
+export const START_LIVES = 3;
+export const MAX_SLOTS = 4;
+export const MAX_COMBO = 12;
+export const COMBO_WINDOW = 3.8;
+export const TURNO_SECS = 48;
+export const BUILD_ID = typeof __BUILD_ID__ === "string" ? __BUILD_ID__ : "dev";
+
+export const layoutWidth = (): number => {
+  if (typeof window === "undefined") return 1280;
+  const vis = window.visualViewport?.width;
+  return typeof vis === "number" && vis > 0 ? vis : window.innerWidth;
+};
+
+export const isPhoneViewport = (): boolean => layoutWidth() < TOUCH_VIEWPORT_MAX;
+
+export const wantsTouchControls = (): boolean => {
+  if (typeof window === "undefined") return false;
+  let coarse = false;
+  try {
+    coarse = window.matchMedia("(pointer: coarse)").matches;
+  } catch {
+    coarse = false;
+  }
+  const points = typeof navigator !== "undefined" ? navigator.maxTouchPoints : 0;
+  return isPhoneViewport() || coarse || points > 0;
+};
+
+export function clamp(v: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, v));
+}
+
+export function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+export function damp(current: number, target: number, lambda: number, dt: number): number {
+  return lerp(current, target, 1 - Math.exp(-lambda * dt));
+}
+
+export function randInt(n: number): number {
+  return Math.floor(Math.random() * n);
+}
+
+export function pick<T>(arr: readonly T[]): T {
+  return arr[randInt(arr.length)]!;
+}
+
+export function shuffleInPlace<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = randInt(i + 1);
+    const tmp = arr[i]!;
+    arr[i] = arr[j]!;
+    arr[j] = tmp;
+  }
+  return arr;
+}

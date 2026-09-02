@@ -1,0 +1,17 @@
+{
+  "name": "balcao-do-caos",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Balcão do Caos — atenda clientes numa lojinha antes deles pirarem",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host --port 4173",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7"
+  }
+}

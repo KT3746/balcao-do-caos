@@ -1,0 +1,72 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Build
+        run: npm run build
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+      - name: Cache-bust
+        run: |
+          printf '%s\n' "${GITHUB_SHA}" > dist/version.txt
+          python3 - <<'PY'
+          import os, pathlib, re
+          sha = os.environ["GITHUB_SHA"]
+          short = sha[:12]
+          p = pathlib.Path("dist/index.html")
+          html = p.read_text(encoding="utf-8").replace("__BUILD_ID__", short)
+          if 'name="build-id"' in html:
+              html = re.sub(
+                  r'(<meta name="build-id" content=")[^"]*(")',
+                  rf"\g<1>{short}\2",
+                  html,
+                  count=1,
+              )
+          else:
+              html = html.replace(
+                  "</head>",
+                  f'    <meta name="build-id" content="{short}" />\n  </head>',
+                  1,
+              )
+          p.write_text(html, encoding="utf-8")
+          PY
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
