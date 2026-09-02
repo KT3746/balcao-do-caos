@@ -1,7 +1,19 @@
 import { Sfx } from "../audio/sfx";
-import { BUILD_ID } from "../config";
-import { TOASTS, productsUnlocked } from "../data/catalog";
-import { createRun, floatText, livesGlyph, maxSlotsFor, tick, toastFor, tryDeliver, tryPickup, type Run, type SimEvent } from "./sim";
+import { BUILD_ID, GAME_TITLE, HUD_H_LANDSCAPE, HUD_H_PORTRAIT, wantsTouchCopy } from "../config";
+import { PRODUCT_BY_ID, TOASTS, productsUnlocked } from "../data/catalog";
+import {
+  createRun,
+  dropHolding,
+  floatText,
+  livesGlyph,
+  maxSlotsFor,
+  tick,
+  toastFor,
+  tryDeliver,
+  tryPickup,
+  type Run,
+  type SimEvent,
+} from "./sim";
 import { loadSave, writeSave } from "../persist";
 import { computeLayout, contains, type PlayLayout } from "../render/layout";
 import { drawProduct, drawShop, hitCustomer, hitProduct, type PointerGhost } from "../render/draw";
@@ -25,10 +37,17 @@ export class Game {
   private toastEl: HTMLElement;
   private bannerEl: HTMLElement;
   private hud: HTMLElement;
+  private hurtEl: HTMLElement | null = null;
   private dragging: ProductId | null = null;
   private pointerId: number | null = null;
   private cssW = 0;
   private cssH = 0;
+  private layoutKey = "";
+  private hudBand = 0;
+  private hidePauseTimer = 0;
+  private ignorePauseUiUntil = 0;
+  private ignoreVisibilityUntil = 0;
+  private guardTimer = 0;
 
   constructor(canvas: HTMLCanvasElement, uiRoot: HTMLElement) {
     const ctx = canvas.getContext("2d", { alpha: false });
@@ -39,17 +58,17 @@ export class Game {
     this.ui.onAction = (a) => this.handle(a);
     this.save = loadSave();
     this.audio.setMuted(this.save.muted);
-    this.toastEl = document.getElementById("toast")!;
+    this.toastEl = document.getElementById("toasts")!;
     this.bannerEl = document.getElementById("banner")!;
     this.hud = document.getElementById("hud")!;
+    this.hurtEl = document.getElementById("hurt");
+    const shop = document.getElementById("hud-shop");
+    if (shop) shop.textContent = GAME_TITLE;
     this.bind();
     this.showTitle();
     window.addEventListener("resize", () => this.resize());
     window.addEventListener("orientationchange", () => this.resize());
-    document.addEventListener("visibilitychange", () => {
-      this.hidden = document.hidden;
-      if (document.hidden && this.view === "play") this.pause();
-    });
+    document.addEventListener("visibilitychange", () => this.onVisibility());
     const unlock = () => {
       void this.audio.unlock();
       window.removeEventListener("pointerdown", unlock);
@@ -81,16 +100,117 @@ export class Game {
     requestAnimationFrame(loop);
   }
 
-  private bind(): void {
-    document.getElementById("btn-pause")?.addEventListener("click", () => this.handle({ type: "pause" }));
-    document.getElementById("btn-mute")?.addEventListener("click", () => this.handle({ type: "mute" }));
+  /** Bloqueia Pausa (HUD) e, se pedido, o auto-pause de aba por alguns ms. */
+  private playGuard(pauseUiMs: number, visibilityMs = 0): void {
+    const now = performance.now();
+    this.ignorePauseUiUntil = Math.max(this.ignorePauseUiUntil, now + pauseUiMs);
+    if (visibilityMs > 0) {
+      this.ignoreVisibilityUntil = Math.max(this.ignoreVisibilityUntil, now + visibilityMs);
+    }
+    this.hud.classList.add("play-guard");
+    document.body.classList.add("play-guard");
+    const pauseBtn = document.getElementById("btn-pause") as HTMLButtonElement | null;
+    if (pauseBtn) pauseBtn.disabled = true;
+    this.scheduleGuardClear();
+  }
 
-    this.canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+  private scheduleGuardClear(): void {
+    window.clearTimeout(this.guardTimer);
+    const wait = Math.max(this.ignorePauseUiUntil, this.ignoreVisibilityUntil) - performance.now();
+    this.guardTimer = window.setTimeout(() => this.clearPlayGuard(), Math.max(0, wait));
+  }
+
+  private clearPlayGuard(): void {
+    this.hud.classList.remove("play-guard");
+    document.body.classList.remove("play-guard");
+    const pauseBtn = document.getElementById("btn-pause") as HTMLButtonElement | null;
+    if (pauseBtn) pauseBtn.disabled = false;
+  }
+
+  private pauseUiBlocked(): boolean {
+    return performance.now() < this.ignorePauseUiUntil;
+  }
+
+  private onVisibility(): void {
+    if (document.visibilityState !== "hidden") {
+      window.clearTimeout(this.hidePauseTimer);
+      this.hidden = false;
+      return;
+    }
+    if (performance.now() < this.ignoreVisibilityUntil) return;
+    window.clearTimeout(this.hidePauseTimer);
+    this.hidePauseTimer = window.setTimeout(() => {
+      if (document.visibilityState !== "hidden") return;
+      if (performance.now() < this.ignoreVisibilityUntil) return;
+      this.hidden = true;
+      if (this.view === "play" && !this.run?.tutorial) this.pause();
+    }, 2500);
+  }
+
+  private swallowPauseHit(e: Event): boolean {
+    const t = e.target as HTMLElement | null;
+    if (!t?.closest("#btn-pause")) return false;
+    if (!this.pauseUiBlocked()) return false;
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof (e as Event & { stopImmediatePropagation?: () => void }).stopImmediatePropagation === "function") {
+      e.stopImmediatePropagation();
+    }
+    return true;
+  }
+
+  private bind(): void {
+    const pauseBtn = document.getElementById("btn-pause");
+    const blockPause = (e: Event) => {
+      if (this.swallowPauseHit(e)) return;
+    };
+    pauseBtn?.addEventListener(
+      "click",
+      (e) => {
+        if (this.swallowPauseHit(e)) return;
+        this.handle({ type: "pause" });
+      },
+      true,
+    );
+    for (const type of ["pointerdown", "pointerup", "touchstart", "touchend"] as const) {
+      pauseBtn?.addEventListener(type, blockPause, true);
+    }
+    document.getElementById("btn-mute")?.addEventListener("click", () => this.handle({ type: "mute" }));
+    document.getElementById("btn-drop")?.addEventListener("click", () => this.drop());
+
+    this.canvas.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      this.drop();
+    });
     this.canvas.addEventListener("pointerdown", (e) => this.onDown(e));
     this.canvas.addEventListener("pointermove", (e) => this.onMove(e));
     this.canvas.addEventListener("pointerup", (e) => this.onUp(e));
     this.canvas.addEventListener("pointercancel", () => this.clearDrag());
-    window.addEventListener("keydown", (e) => this.onKey(e));
+    this.canvas.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    this.canvas.addEventListener(
+      "touchstart",
+      () => {
+        this.playGuard(500, 500);
+      },
+      { passive: true },
+    );
+    this.canvas.addEventListener(
+      "touchend",
+      (e) => {
+        if (this.view !== "play") return;
+        e.preventDefault();
+      },
+      { passive: false },
+    );
+    window.addEventListener("keydown", (e) => this.onKey(e), true);
+    // Intencional: sem window 'blur'/'focus' — no celular isso dispara ao tocar a tela.
+
+    for (const type of ["click", "pointerdown", "pointerup", "touchend"] as const) {
+      document.addEventListener(type, (e) => this.swallowPauseHit(e), true);
+    }
 
     document.body.addEventListener(
       "touchmove",
@@ -111,13 +231,20 @@ export class Game {
 
   private onDown(e: PointerEvent): void {
     if (this.view !== "play" || !this.run || !this.layout) return;
+    if (this.run.tutorial || this.run.over) return;
+    if (e.button === 2) {
+      this.drop();
+      return;
+    }
     if (e.button !== 0 && e.pointerType === "mouse") return;
+    this.playGuard(500, 500);
     void this.audio.unlock();
+    this.run.lockQueue = true;
     const p = this.pos(e);
     const cust = hitCustomer(this.layout, this.run, p.x, p.y);
     const prod = hitProduct(this.layout, this.run, p.x, p.y);
     if (!prod && this.tappedBlockedShelf(p.x, p.y)) {
-      this.toast("O gato da loja assumiu a prateleira.");
+      this.toast("O gato da loja assumiu a prateleira.", 1100);
       this.audio.wrong();
       return;
     }
@@ -139,7 +266,9 @@ export class Game {
     if (cust != null) {
       this.selected = cust;
       if (this.run.holding) this.deliver(cust, p);
+      return;
     }
+    if (this.run.holding) this.drop();
   }
 
   private tappedBlockedShelf(x: number, y: number): boolean {
@@ -162,7 +291,10 @@ export class Game {
   }
 
   private onUp(e: PointerEvent): void {
-    if (this.view !== "play" || !this.run || !this.layout) return;
+    if (this.view !== "play" || !this.run || !this.layout) {
+      this.clearDrag();
+      return;
+    }
     if (this.dragging && e.pointerId === this.pointerId) {
       const p = this.pos(e);
       const cust = hitCustomer(this.layout, this.run, p.x, p.y);
@@ -175,10 +307,11 @@ export class Game {
     this.dragging = null;
     this.pointerId = null;
     this.ghost = null;
+    if (this.run) this.run.lockQueue = false;
   }
 
   private deliver(customerId: number, at: { x: number; y: number }): void {
-    if (!this.run) return;
+    if (!this.run || this.run.tutorial) return;
     const ev = tryDeliver(this.run, customerId, {
       x: at.x / Math.max(1, this.cssW),
       y: at.y / Math.max(1, this.cssH),
@@ -187,8 +320,61 @@ export class Game {
     this.applyEvent(ev, at);
   }
 
+  private drop(): void {
+    if (!this.run || this.view !== "play") return;
+    if (dropHolding(this.run)) this.audio.click();
+  }
+
+  private waitingCustomers(): { id: number }[] {
+    if (!this.run) return [];
+    return this.run.customers.filter((c) => c.mood === "wait" || c.mood === "enter");
+  }
+
+  private selectedId(): number | null {
+    const waiting = this.waitingCustomers();
+    if (!waiting.length) return null;
+    if (this.selected != null && waiting.some((c) => c.id === this.selected)) return this.selected;
+    this.selected = waiting[0]!.id;
+    return this.selected;
+  }
+
   private onKey(e: KeyboardEvent): void {
+    const playing = this.view === "play" && this.run && !this.run.tutorial;
+    const gameKey =
+      e.code === "Space" ||
+      e.code === "Enter" ||
+      e.code === "Escape" ||
+      e.code.startsWith("Digit") ||
+      e.code.startsWith("Numpad") ||
+      e.code === "ArrowLeft" ||
+      e.code === "ArrowRight" ||
+      e.code === "KeyM" ||
+      e.code === "KeyX";
+    if (playing && gameKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      const ae = document.activeElement;
+      if (ae instanceof HTMLElement && ae.closest("#hud, button")) ae.blur();
+    }
+
+    if (e.code === "Digit3" || e.code === "Numpad3" || e.key === "3") {
+      if (!playing || !this.run || !this.layout) return;
+      const order = this.run.shelfOrder;
+      const ids =
+        order.length === this.layout.cells.length ? order.slice() : this.layout.cells.map((c) => c.id);
+      const third = ids[2];
+      if (third) {
+        const ev = tryPickup(this.run, third);
+        if (ev) this.audio.pickup();
+      }
+      return;
+    }
     if (e.code === "Escape") {
+      if (this.view === "play" && this.run?.tutorial) return;
+      if (playing && this.run?.holding) {
+        this.drop();
+        return;
+      }
       if (this.view === "play") this.pause();
       else if (this.view === "paused") this.resume();
       return;
@@ -197,7 +383,11 @@ export class Game {
       this.handle({ type: "mute" });
       return;
     }
-    if (this.view !== "play" || !this.run || !this.layout) return;
+    if (!playing || !this.run || !this.layout) return;
+    if (e.code === "KeyX") {
+      this.drop();
+      return;
+    }
     const order = this.run.shelfOrder;
     const ids =
       order.length === this.layout.cells.length ? order.slice() : this.layout.cells.map((c) => c.id);
@@ -210,6 +400,14 @@ export class Game {
       Digit6: 5,
       Digit7: 6,
       Digit8: 7,
+      Numpad1: 0,
+      Numpad2: 1,
+      Numpad3: 2,
+      Numpad4: 3,
+      Numpad5: 4,
+      Numpad6: 5,
+      Numpad7: 6,
+      Numpad8: 7,
       KeyQ: 8,
       KeyW: 9,
       KeyE: 10,
@@ -223,23 +421,27 @@ export class Game {
     if (idx != null && ids[idx]) {
       const ev = tryPickup(this.run, ids[idx]!);
       if (ev) this.audio.pickup();
-      e.preventDefault();
       return;
     }
-    const waiting = this.run.customers.filter((c) => c.mood === "wait" || c.mood === "enter");
+    const waiting = this.waitingCustomers();
     if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
       if (!waiting.length) return;
       const i = waiting.findIndex((c) => c.id === this.selected);
       const next = e.code === "ArrowRight" ? i + 1 : i - 1;
       const wrap = (next + waiting.length) % waiting.length;
       this.selected = waiting[wrap]!.id;
-      e.preventDefault();
       return;
     }
     if (e.code === "Space" || e.code === "Enter") {
-      const id = this.selected ?? waiting[0]?.id;
-      if (id != null) this.deliver(id, { x: this.cssW / 2, y: this.cssH * 0.3 });
-      e.preventDefault();
+      const id = this.selectedId();
+      if (id != null) {
+        const c = this.run.customers.find((x) => x.id === id);
+        const slot = c ? this.layout.slots[c.slot] : null;
+        const at = slot
+          ? { x: slot.x + slot.w / 2, y: slot.y + slot.h * 0.4 }
+          : { x: this.cssW / 2, y: this.cssH * 0.28 };
+        this.deliver(id, at);
+      }
     }
   }
 
@@ -248,36 +450,32 @@ export class Game {
     switch (ev.type) {
       case "spawn":
         this.audio.bell();
+        if (this.selected == null) this.selected = this.selectedId();
         break;
       case "deliver": {
         this.audio.cash();
         if (ev.combo >= 3) this.audio.combo(ev.combo);
-        if (at) {
-          floatText(
-            this.run,
-            at.x / Math.max(1, this.cssW),
-            at.y / Math.max(1, this.cssH) - 0.04,
-            `+${ev.score}`,
-            "#2f6b4f",
-          );
-        }
-        if (ev.combo >= 4) this.toast(TOASTS.combo[Math.min(TOASTS.combo.length - 1, ev.combo - 4)]!);
+        this.popScore(ev.score, ev.combo, ev.customerId, at);
         break;
       }
       case "wrong":
         this.audio.wrong();
-        this.toast(TOASTS.wrong[0]!);
+        this.toast(TOASTS.wrong[0]!, 1100);
         break;
       case "rage":
         this.audio.slam();
-        this.toast(`${ev.name} foi embora.`);
+        this.toast(
+          `${ev.name} foi embora — você perdeu uma vida. Restam ${Math.max(0, this.run.lives)}.`,
+          1400,
+        );
+        this.flashLifeLost();
         break;
       case "shift":
         this.audio.shift();
         break;
       case "chaos":
         this.audio.chaos();
-        this.toast(toastFor(ev.kind));
+        this.toast(toastFor(ev.kind), 1200);
         break;
       case "over":
         this.audio.over();
@@ -291,10 +489,13 @@ export class Game {
   private tick(dt: number): void {
     this.resizeIfNeeded();
     if (this.view === "play" && this.run) {
-      this.layout = computeLayout(this.cssW, this.cssH, this.run.turno, maxSlotsFor(this.run.turno));
+      this.ensureLayout();
+      const beforeTurno = this.run.turno;
       const events = tick(this.run, dt);
+      if (this.run.turno !== beforeTurno) this.ensureLayout(true);
       for (const ev of events) this.applyEvent(ev);
       if (this.run.over && this.view === "play") this.finish();
+      this.selectedId();
       this.syncHud();
       this.syncBanner();
     }
@@ -354,7 +555,23 @@ export class Game {
     this.canvas.style.width = `${w}px`;
     this.canvas.style.height = `${h}px`;
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
-    if (this.run) this.layout = computeLayout(w, h, this.run.turno, maxSlotsFor(this.run.turno));
+    this.hudBand = 0;
+    if (!this.hud.hidden) {
+      const box = this.hud.getBoundingClientRect().height;
+      if (box > 40) this.hudBand = Math.ceil(box) + 8;
+    }
+    this.ensureLayout(true);
+  }
+
+  private ensureLayout(force = false): void {
+    if (!this.run) return;
+    const landscape = this.cssW > this.cssH * 1.12 && this.cssH < 620;
+    const band = this.hudBand || (landscape ? HUD_H_LANDSCAPE : HUD_H_PORTRAIT);
+    const slots = maxSlotsFor(this.run.turno);
+    const key = `${this.cssW}x${this.cssH}:${this.run.turno}:${slots}:${band}`;
+    if (!force && this.layout && this.layoutKey === key) return;
+    this.layoutKey = key;
+    this.layout = computeLayout(this.cssW, this.cssH, this.run.turno, slots, band);
   }
 
   private showTitle(): void {
@@ -368,17 +585,43 @@ export class Game {
     this.run = createRun();
     this.selected = null;
     this.view = "play";
-    this.ui.root.innerHTML = "";
     this.save.plays += 1;
     writeSave(this.save);
-    this.resize();
+    this.ui.intro(wantsTouchCopy());
     this.syncChrome();
+    this.resize();
     this.syncHud();
     this.audio.shift();
   }
 
+  private beginShift(): void {
+    if (!this.run?.tutorial) return;
+    this.run.tutorial = false;
+    this.run.lockQueue = false;
+    this.run.spawnIn = 0.55;
+    this.run.hint = null;
+    this.run.hintT = 0;
+    this.run.banner = "A loja abriu.";
+    this.run.bannerT = 2;
+    this.ui.root.innerHTML = "";
+    this.syncChrome();
+    this.resize();
+    document.getElementById("btn-pause")?.blur();
+    document.getElementById("btn-mute")?.blur();
+    this.toast(
+      wantsTouchCopy()
+        ? "Toque no produto, depois no cliente. Ou arraste."
+        : "Clique no produto, depois no cliente. 1–8 pega o item. Espaço entrega.",
+      2600,
+    );
+    this.audio.shift();
+    this.playGuard(300, 500);
+  }
+
   private pause(): void {
-    if (this.view !== "play") return;
+    if (this.view !== "play" || this.run?.tutorial) return;
+    if (this.pauseUiBlocked()) return;
+    this.clearDrag();
     this.view = "paused";
     this.ui.pause(this.save.muted);
     this.syncChrome();
@@ -389,6 +632,8 @@ export class Game {
     this.view = "play";
     this.ui.root.innerHTML = "";
     this.syncChrome();
+    this.playGuard(300, 500);
+    document.getElementById("btn-pause")?.blur();
   }
 
   private finish(): void {
@@ -438,6 +683,9 @@ export class Game {
       case "retry":
         this.play();
         break;
+      case "begin":
+        this.beginShift();
+        break;
       case "mute": {
         const muted = this.audio.toggleMute();
         this.save.muted = muted;
@@ -455,12 +703,15 @@ export class Game {
 
   private syncChrome(): void {
     const playing = this.view === "play";
-    document.body.classList.toggle("is-play", playing);
+    const showHud = playing && !!this.run && !this.run.tutorial;
+    document.body.classList.toggle("is-play", playing && !this.run?.tutorial);
     document.body.dataset.view = this.view;
-    this.hud.hidden = !playing;
+    this.hud.hidden = !showHud;
     if (!playing) {
       this.bannerEl.hidden = true;
       this.toastEl.hidden = true;
+      this.toastEl.replaceChildren();
+      if (this.hurtEl) this.hurtEl.hidden = true;
     }
     this.syncMuteButtons();
   }
@@ -486,6 +737,34 @@ export class Game {
         combo.textContent = `Combo ×${this.run.combo}`;
       } else combo.hidden = true;
     }
+    const hand = document.getElementById("hud-hand");
+    const handName = document.getElementById("hud-hand-name");
+    if (hand && handName) {
+      if (this.run.holding) {
+        hand.hidden = false;
+        handName.textContent = PRODUCT_BY_ID[this.run.holding].short;
+      } else {
+        hand.hidden = true;
+        handName.textContent = "—";
+      }
+    }
+  }
+
+  private popScore(score: number, combo: number, customerId: number, at?: { x: number; y: number }): void {
+    if (!this.run || !this.layout) return;
+    const c = this.run.customers.find((x) => x.id === customerId);
+    const slot = c ? this.layout.slots[c.slot] : null;
+    let x = 0.5;
+    let y = 0.22;
+    if (slot) {
+      x = (slot.x + slot.w / 2) / Math.max(1, this.cssW);
+      y = (slot.y + 18) / Math.max(1, this.cssH);
+    } else if (at) {
+      x = at.x / Math.max(1, this.cssW);
+      y = at.y / Math.max(1, this.cssH) - 0.04;
+    }
+    floatText(this.run, x, y, `+${score}`, "#e3b23c");
+    if (combo >= 2) floatText(this.run, x, y - 0.045, `Combo ×${combo}`, "#7dff9a");
   }
 
   private syncBanner(): void {
@@ -496,11 +775,32 @@ export class Game {
     } else this.bannerEl.hidden = true;
   }
 
-  private toast(text: string): void {
+  private toast(text: string, ms = 1100): void {
     this.toastEl.hidden = false;
-    this.toastEl.textContent = text;
+    const el = document.createElement("div");
+    el.className = "toast";
+    el.textContent = text;
+    this.toastEl.appendChild(el);
+    while (this.toastEl.childElementCount > 3) this.toastEl.firstElementChild?.remove();
     window.setTimeout(() => {
-      if (this.toastEl.textContent === text) this.toastEl.hidden = true;
-    }, 1600);
+      el.remove();
+      if (!this.toastEl.childElementCount) this.toastEl.hidden = true;
+    }, ms);
+  }
+
+  private flashLifeLost(): void {
+    const lives = document.getElementById("hud-lives");
+    lives?.classList.remove("pulse-lost");
+    void lives?.offsetWidth;
+    lives?.classList.add("pulse-lost");
+    if (this.hurtEl) {
+      this.hurtEl.hidden = true;
+      void this.hurtEl.offsetWidth;
+      this.hurtEl.hidden = false;
+    }
+    window.setTimeout(() => {
+      lives?.classList.remove("pulse-lost");
+      if (this.hurtEl) this.hurtEl.hidden = true;
+    }, 700);
   }
 }

@@ -49,7 +49,7 @@ export type Particle = {
 export type SimEvent =
   | { type: "spawn"; name: string }
   | { type: "pickup"; id: ProductId }
-  | { type: "deliver"; score: number; combo: number; done: boolean; name: string }
+  | { type: "deliver"; score: number; combo: number; done: boolean; name: string; customerId: number }
   | { type: "wrong"; name: string }
   | { type: "rage"; name: string }
   | { type: "shift"; turno: number }
@@ -84,6 +84,8 @@ export type Run = {
   catVx: number;
   shake: number;
   particles: Particle[];
+  tutorial: boolean;
+  lockQueue: boolean;
 };
 
 const easyFirst: ProductId[] = ["pao", "leite", "lua", "macarrao"];
@@ -98,7 +100,7 @@ export function createRun(): Run {
     lives: START_LIVES,
     turno: 1,
     turnoT: 0,
-    spawnIn: 1.15,
+    spawnIn: 0.55,
     customers: [],
     holding: null,
     chaos: null,
@@ -107,30 +109,34 @@ export function createRun(): Run {
     served: 0,
     wrong: 0,
     shelfOrder: unlocked.slice(),
-    hint: "Toque no produto, depois no cliente. Ou arraste.",
-    hintT: 8,
-    banner: "A loja abriu. Não entre em pânico.",
-    bannerT: 2.2,
+    hint: null,
+    hintT: 0,
+    banner: null,
+    bannerT: 0,
     first: true,
     chaosIn: 22,
     catX: 0.15,
     catVx: 0.22,
     shake: 0,
     particles: [],
+    tutorial: true,
+    lockQueue: false,
   };
   return run;
 }
 
 export function maxSlotsFor(turno: number): number {
+  if (turno <= 1) return 1;
   return clamp(1 + turno, 2, MAX_SLOTS);
 }
 
 export function spawnInterval(turno: number): number {
+  if (turno <= 1) return 9.2 + Math.random() * 1.1;
   return Math.max(1.7, 5.15 - turno * 0.62) + Math.random() * 0.5;
 }
 
 export function patienceFor(turno: number, items: number, special: boolean): number {
-  const base = Math.max(7.2, 18.2 - turno * 2.15);
+  const base = turno <= 1 ? 44 : Math.max(8, 18.2 - turno * 2.15);
   const extra = (items - 1) * 3.1;
   return (base + extra) * (special ? 0.72 : 1);
 }
@@ -192,7 +198,7 @@ export function spawnCustomer(run: Run): SimEvent | null {
     special,
   };
   if (run.first) {
-    c.patienceMax *= 1.4;
+    c.patienceMax *= 1.5;
     c.patience = c.patienceMax;
   }
   run.customers.push(c);
@@ -201,17 +207,27 @@ export function spawnCustomer(run: Run): SimEvent | null {
   return { type: "spawn", name: arch.name };
 }
 
+export function dropHolding(run: Run): boolean {
+  if (run.over || run.tutorial || !run.holding) return false;
+  run.holding = null;
+  return true;
+}
+
 export function tryPickup(run: Run, id: ProductId): SimEvent | null {
-  if (run.over) return null;
+  if (run.over || run.tutorial) return null;
   const unlocked = productsUnlocked(run.turno).some((p) => p.id === id);
   if (!unlocked) return null;
   run.holding = id;
   return { type: "pickup", id };
 }
 
+export function customerById(run: Run, customerId: number): Customer | undefined {
+  return run.customers.find((x) => x.id === customerId);
+}
+
 export function tryDeliver(run: Run, customerId: number, at?: { x: number; y: number }): SimEvent | null {
-  if (run.over) return null;
-  const c = run.customers.find((x) => x.id === customerId);
+  if (run.over || run.tutorial) return null;
+  const c = customerById(run, customerId);
   if (!c || (c.mood !== "wait" && c.mood !== "enter")) return null;
   if (!run.holding) return null;
   const want = c.order[0];
@@ -251,7 +267,7 @@ export function tryDeliver(run: Run, customerId: number, at?: { x: number; y: nu
     run.hint = "Isso. Mantém o ritmo.";
     run.hintT = 2.4;
   }
-  return { type: "deliver", score: gain, combo: run.combo, done, name: arch.name };
+  return { type: "deliver", score: gain, combo: run.combo, done, name: arch.name, customerId: c.id };
 }
 
 function burst(run: Run, x: number, y: number, color: string, n: number): void {
@@ -275,12 +291,12 @@ export function floatText(run: Run, x: number, y: number, text: string, color: s
     x,
     y,
     vx: 0,
-    vy: -0.12,
-    life: 0.9,
-    max: 0.9,
+    vy: -0.08,
+    life: 1.15,
+    max: 1.15,
     text,
     color,
-    size: 14,
+    size: 22,
     kind: "float",
   });
 }
@@ -317,11 +333,25 @@ function maybeShift(run: Run): SimEvent | null {
   return { type: "shift", turno: run.turno };
 }
 
+function decayFx(run: Run, dt: number): void {
+  run.shake = Math.max(0, run.shake - dt * 28);
+  for (const p of run.particles) {
+    p.life -= dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 0.35 * dt;
+  }
+  run.particles = run.particles.filter((p) => p.life > 0);
+}
+
 export function tick(run: Run, dt: number): SimEvent[] {
   const events: SimEvent[] = [];
   if (run.over) return events;
-  const frozen = run.bannerT > 1.4;
-  const simDt = frozen ? dt * 0.15 : dt;
+  if (run.tutorial || run.lockQueue) {
+    decayFx(run, dt);
+    return events;
+  }
+  const simDt = dt;
   run.t += simDt;
   run.turnoT += simDt;
   run.shake = Math.max(0, run.shake - dt * 28);
@@ -359,7 +389,7 @@ export function tick(run: Run, dt: number): SimEvent[] {
   if (shift) events.push(shift);
 
   run.spawnIn -= simDt;
-  const holdFirst = run.served === 0 && run.t < 11 && run.customers.length >= 1;
+  const holdFirst = run.turno === 1 && run.served < 1 && run.customers.length >= 1;
   if (run.spawnIn <= 0 && !holdFirst) {
     const ev = spawnCustomer(run);
     if (ev) events.push(ev);
@@ -372,7 +402,8 @@ export function tick(run: Run, dt: number): SimEvent[] {
       c.anim = Math.min(1, c.anim + dt * 2.4);
       if (c.anim >= 1) c.mood = "wait";
     } else if (c.mood === "wait") {
-      c.patience -= simDt;
+      const drain = run.turno <= 1 ? simDt * 0.38 : simDt;
+      c.patience -= drain;
       if (c.patience / c.patienceMax < 0.34 && c.phraseT <= 0) {
         const arch = ARCHETYPES.find((a) => a.id === c.arch);
         if (arch) say(c, arch.wait);
