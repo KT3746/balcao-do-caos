@@ -57,6 +57,20 @@ body.is-play {
 
 #scene {
   display: block;
+  z-index: 1;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+/* Depois de Continuar / toque no canvas, o jogo fica por cima do botão Pausa
+   para o primeiro toque acertar a prateleira, não o HUD (ghost click iOS). */
+body.play-guard #scene {
+  z-index: 8;
+}
+
+body.play-guard #btn-pause,
+#hud.play-guard #btn-pause {
+  pointer-events: none !important;
 }
 
 #ui {
@@ -73,7 +87,7 @@ body.is-play {
 }
 
 #hud[hidden],
-#toast[hidden],
+#toasts[hidden],
 #banner[hidden],
 #hurt[hidden],
 #hud-hand[hidden] {
@@ -154,12 +168,26 @@ body.is-play {
 #hud .right,
 .hud-cluster.right {
   grid-area: right;
-  pointer-events: auto;
+  pointer-events: none;
   display: flex;
   gap: 8px;
   flex: 0 0 auto;
   margin-left: 0;
   justify-self: end;
+}
+
+.hud-cluster.right .icon-btn {
+  pointer-events: auto;
+}
+
+#hud.play-guard .icon-btn {
+  pointer-events: none !important;
+}
+
+#btn-pause {
+  position: relative;
+  z-index: 1;
+  touch-action: manipulation;
 }
 
 .hud-cluster.left {
@@ -248,27 +276,35 @@ body.is-play {
   }
 }
 
-#toast,
+.toast-stack,
 #banner {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
   z-index: 9;
   pointer-events: none;
+  text-align: center;
+  max-width: min(78vw, 340px);
+}
+
+.toast-stack {
+  top: calc(var(--safe-t) + 112px);
+  bottom: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.toast-stack .toast {
   background: var(--panel);
   color: var(--cream);
   border: 2px solid rgba(227, 178, 60, 0.4);
   border-radius: 999px;
   padding: 6px 14px;
   font-weight: 700;
-  text-align: center;
-  max-width: min(78vw, 340px);
-}
-
-#toast {
-  top: calc(var(--safe-t) + 112px);
-  bottom: auto;
   font-size: 14px;
+  max-width: 100%;
 }
 
 #banner {
@@ -278,6 +314,8 @@ body.is-play {
   border-radius: 16px;
   padding: 12px 18px;
   background: rgba(42, 29, 18, 0.9);
+  color: var(--cream);
+  border: 2px solid rgba(227, 178, 60, 0.4);
 }
 
 .screen {
@@ -454,7 +492,7 @@ h2 {
   .hud-hand {
     justify-self: stretch;
   }
-  #toast {
+  .toast-stack {
     top: calc(var(--safe-t) + 128px);
     max-width: min(72vw, 280px);
   }

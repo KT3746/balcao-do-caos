@@ -96,7 +96,13 @@ export class Screens {
       </section>`);
   }
 
-  intro(): void {
+  intro(touch: boolean): void {
+    const grab = touch
+      ? "Toque no produto na prateleira — ou arraste até a pessoa."
+      : "Clique no produto na prateleira — ou arraste até a pessoa.";
+    const give = touch
+      ? "Toque no cliente para entregar. O pedido está no balão."
+      : "Clique no cliente para entregar. O pedido está no balão.";
     this.set(`
       <section class="overlay intro-overlay">
         <div class="panel">
@@ -104,8 +110,8 @@ export class Screens {
           <h2>Balcão do Caos</h2>
           <p class="lede">A fila só anda quando você fechar este recado. Ninguém perde vida enquanto lê.</p>
           <div class="sheet">
-            <p><b>1.</b> Toque no produto na prateleira — ou arraste até a pessoa.</p>
-            <p><b>2.</b> Toque no cliente para entregar. O pedido está no balão.</p>
+            <p><b>1.</b> ${grab}</p>
+            <p><b>2.</b> ${give}</p>
             <p><b>3.</b> Três clientes furiosos encerram o expediente. O ritmo sobe depois.</p>
           </div>
           <div class="stack">

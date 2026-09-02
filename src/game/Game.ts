@@ -38,7 +38,6 @@ export class Game {
   private bannerEl: HTMLElement;
   private hud: HTMLElement;
   private hurtEl: HTMLElement | null = null;
-  private toastTimer = 0;
   private dragging: ProductId | null = null;
   private pointerId: number | null = null;
   private cssW = 0;
@@ -46,6 +45,9 @@ export class Game {
   private layoutKey = "";
   private hudBand = 0;
   private hidePauseTimer = 0;
+  private ignorePauseUiUntil = 0;
+  private ignoreVisibilityUntil = 0;
+  private guardTimer = 0;
 
   constructor(canvas: HTMLCanvasElement, uiRoot: HTMLElement) {
     const ctx = canvas.getContext("2d", { alpha: false });
@@ -56,7 +58,7 @@ export class Game {
     this.ui.onAction = (a) => this.handle(a);
     this.save = loadSave();
     this.audio.setMuted(this.save.muted);
-    this.toastEl = document.getElementById("toast")!;
+    this.toastEl = document.getElementById("toasts")!;
     this.bannerEl = document.getElementById("banner")!;
     this.hud = document.getElementById("hud")!;
     this.hurtEl = document.getElementById("hurt");
@@ -66,18 +68,7 @@ export class Game {
     this.showTitle();
     window.addEventListener("resize", () => this.resize());
     window.addEventListener("orientationchange", () => this.resize());
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) {
-        this.hidden = true;
-        window.clearTimeout(this.hidePauseTimer);
-        this.hidePauseTimer = window.setTimeout(() => {
-          if (document.hidden && this.view === "play" && !this.run?.tutorial) this.pause();
-        }, 2500);
-        return;
-      }
-      window.clearTimeout(this.hidePauseTimer);
-      this.hidden = false;
-    });
+    document.addEventListener("visibilitychange", () => this.onVisibility());
     const unlock = () => {
       void this.audio.unlock();
       window.removeEventListener("pointerdown", unlock);
@@ -109,8 +100,81 @@ export class Game {
     requestAnimationFrame(loop);
   }
 
+  /** Bloqueia Pausa (HUD) e, se pedido, o auto-pause de aba por alguns ms. */
+  private playGuard(pauseUiMs: number, visibilityMs = 0): void {
+    const now = performance.now();
+    this.ignorePauseUiUntil = Math.max(this.ignorePauseUiUntil, now + pauseUiMs);
+    if (visibilityMs > 0) {
+      this.ignoreVisibilityUntil = Math.max(this.ignoreVisibilityUntil, now + visibilityMs);
+    }
+    this.hud.classList.add("play-guard");
+    document.body.classList.add("play-guard");
+    const pauseBtn = document.getElementById("btn-pause") as HTMLButtonElement | null;
+    if (pauseBtn) pauseBtn.disabled = true;
+    this.scheduleGuardClear();
+  }
+
+  private scheduleGuardClear(): void {
+    window.clearTimeout(this.guardTimer);
+    const wait = Math.max(this.ignorePauseUiUntil, this.ignoreVisibilityUntil) - performance.now();
+    this.guardTimer = window.setTimeout(() => this.clearPlayGuard(), Math.max(0, wait));
+  }
+
+  private clearPlayGuard(): void {
+    this.hud.classList.remove("play-guard");
+    document.body.classList.remove("play-guard");
+    const pauseBtn = document.getElementById("btn-pause") as HTMLButtonElement | null;
+    if (pauseBtn) pauseBtn.disabled = false;
+  }
+
+  private pauseUiBlocked(): boolean {
+    return performance.now() < this.ignorePauseUiUntil;
+  }
+
+  private onVisibility(): void {
+    if (document.visibilityState !== "hidden") {
+      window.clearTimeout(this.hidePauseTimer);
+      this.hidden = false;
+      return;
+    }
+    if (performance.now() < this.ignoreVisibilityUntil) return;
+    window.clearTimeout(this.hidePauseTimer);
+    this.hidePauseTimer = window.setTimeout(() => {
+      if (document.visibilityState !== "hidden") return;
+      if (performance.now() < this.ignoreVisibilityUntil) return;
+      this.hidden = true;
+      if (this.view === "play" && !this.run?.tutorial) this.pause();
+    }, 2500);
+  }
+
+  private swallowPauseHit(e: Event): boolean {
+    const t = e.target as HTMLElement | null;
+    if (!t?.closest("#btn-pause")) return false;
+    if (!this.pauseUiBlocked()) return false;
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof (e as Event & { stopImmediatePropagation?: () => void }).stopImmediatePropagation === "function") {
+      e.stopImmediatePropagation();
+    }
+    return true;
+  }
+
   private bind(): void {
-    document.getElementById("btn-pause")?.addEventListener("click", () => this.handle({ type: "pause" }));
+    const pauseBtn = document.getElementById("btn-pause");
+    const blockPause = (e: Event) => {
+      if (this.swallowPauseHit(e)) return;
+    };
+    pauseBtn?.addEventListener(
+      "click",
+      (e) => {
+        if (this.swallowPauseHit(e)) return;
+        this.handle({ type: "pause" });
+      },
+      true,
+    );
+    for (const type of ["pointerdown", "pointerup", "touchstart", "touchend"] as const) {
+      pauseBtn?.addEventListener(type, blockPause, true);
+    }
     document.getElementById("btn-mute")?.addEventListener("click", () => this.handle({ type: "mute" }));
     document.getElementById("btn-drop")?.addEventListener("click", () => this.drop());
 
@@ -122,7 +186,31 @@ export class Game {
     this.canvas.addEventListener("pointermove", (e) => this.onMove(e));
     this.canvas.addEventListener("pointerup", (e) => this.onUp(e));
     this.canvas.addEventListener("pointercancel", () => this.clearDrag());
+    this.canvas.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    this.canvas.addEventListener(
+      "touchstart",
+      () => {
+        this.playGuard(500, 500);
+      },
+      { passive: true },
+    );
+    this.canvas.addEventListener(
+      "touchend",
+      (e) => {
+        if (this.view !== "play") return;
+        e.preventDefault();
+      },
+      { passive: false },
+    );
     window.addEventListener("keydown", (e) => this.onKey(e), true);
+    // Intencional: sem window 'blur'/'focus' — no celular isso dispara ao tocar a tela.
+
+    for (const type of ["click", "pointerdown", "pointerup", "touchend"] as const) {
+      document.addEventListener(type, (e) => this.swallowPauseHit(e), true);
+    }
 
     document.body.addEventListener(
       "touchmove",
@@ -149,6 +237,7 @@ export class Game {
       return;
     }
     if (e.button !== 0 && e.pointerType === "mouse") return;
+    this.playGuard(500, 500);
     void this.audio.unlock();
     this.run.lockQueue = true;
     const p = this.pos(e);
@@ -268,6 +357,18 @@ export class Game {
       if (ae instanceof HTMLElement && ae.closest("#hud, button")) ae.blur();
     }
 
+    if (e.code === "Digit3" || e.code === "Numpad3" || e.key === "3") {
+      if (!playing || !this.run || !this.layout) return;
+      const order = this.run.shelfOrder;
+      const ids =
+        order.length === this.layout.cells.length ? order.slice() : this.layout.cells.map((c) => c.id);
+      const third = ids[2];
+      if (third) {
+        const ev = tryPickup(this.run, third);
+        if (ev) this.audio.pickup();
+      }
+      return;
+    }
     if (e.code === "Escape") {
       if (this.view === "play" && this.run?.tutorial) return;
       if (playing && this.run?.holding) {
@@ -486,7 +587,7 @@ export class Game {
     this.view = "play";
     this.save.plays += 1;
     writeSave(this.save);
-    this.ui.intro();
+    this.ui.intro(wantsTouchCopy());
     this.syncChrome();
     this.resize();
     this.syncHud();
@@ -514,10 +615,12 @@ export class Game {
       2600,
     );
     this.audio.shift();
+    this.playGuard(300, 500);
   }
 
   private pause(): void {
     if (this.view !== "play" || this.run?.tutorial) return;
+    if (this.pauseUiBlocked()) return;
     this.clearDrag();
     this.view = "paused";
     this.ui.pause(this.save.muted);
@@ -529,6 +632,8 @@ export class Game {
     this.view = "play";
     this.ui.root.innerHTML = "";
     this.syncChrome();
+    this.playGuard(300, 500);
+    document.getElementById("btn-pause")?.blur();
   }
 
   private finish(): void {
@@ -605,6 +710,7 @@ export class Game {
     if (!playing) {
       this.bannerEl.hidden = true;
       this.toastEl.hidden = true;
+      this.toastEl.replaceChildren();
       if (this.hurtEl) this.hurtEl.hidden = true;
     }
     this.syncMuteButtons();
@@ -671,10 +777,14 @@ export class Game {
 
   private toast(text: string, ms = 1100): void {
     this.toastEl.hidden = false;
-    this.toastEl.textContent = text;
-    window.clearTimeout(this.toastTimer);
-    this.toastTimer = window.setTimeout(() => {
-      if (this.toastEl.textContent === text) this.toastEl.hidden = true;
+    const el = document.createElement("div");
+    el.className = "toast";
+    el.textContent = text;
+    this.toastEl.appendChild(el);
+    while (this.toastEl.childElementCount > 3) this.toastEl.firstElementChild?.remove();
+    window.setTimeout(() => {
+      el.remove();
+      if (!this.toastEl.childElementCount) this.toastEl.hidden = true;
     }, ms);
   }
 

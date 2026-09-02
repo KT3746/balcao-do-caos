@@ -26,16 +26,19 @@ O jogo detecta celular e computador. No telefone, só o dedo. No desktop, mouse 
 - Toque no produto para pegar.
 - Toque no cliente para entregar.
 - Arraste o produto até o cliente.
+- **Na mão** mostra o item; **Soltar** (ou toque vazio) larga.
 - **Pausa** e **Som** ficam no topo.
 
 ### Teclado (desktop)
 
 | Ação | Teclas |
 | --- | --- |
-| Pegar produto | `1`–`8`, depois `Q` `W` `E` `R` `A` `S` `D` `F` |
-| Escolher cliente | `←` `→` |
-| Entregar | Espaço ou Enter |
-| Pausar | Esc |
+| Pegar produto | `1`–`8` (e `Q` `W` `E` `R` `A` `S` `D` `F`) |
+| O `3` | pega o 3º item da prateleira — **nunca pausa** |
+| Escolher cliente | `←` `→` (entrega no cliente com aquele id) |
+| Entregar | Espaço ou Enter no cliente marcado |
+| Soltar item | Esc (se a mão estiver ocupada), `X`, botão direito, ou **Soltar** no HUD |
+| Pausar | Esc (mão vazia) ou o botão **Pausa** |
 | Som | M |
 
 ## O que vai acontecendo
