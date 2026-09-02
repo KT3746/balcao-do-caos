@@ -67,7 +67,8 @@ export class Screens {
             <p><b>2.</b> Toque no produto na prateleira — ou arraste até a pessoa.</p>
             <p><b>3.</b> Toque no cliente para entregar. Errar gasta paciência e zera o combo.</p>
             <p><b>4.</b> Três clientes furiosos encerram o expediente. O ritmo sobe a cada turno.</p>
-            <p><b>Celular:</b> só o dedo. <b>Computador:</b> clique, arraste, ou teclas 1–8 / Q–R nos produtos, ← → escolhe o cliente, Espaço entrega, Esc pausa, M muda o som.</p>
+            <p><b>Celular:</b> só o dedo. Toque vazio ou <b>Soltar</b> larga o item.</p>
+            <p><b>Computador:</b> clique, arraste, ou teclas <b>1–8</b> (e Q W E R) nos produtos. <b>3</b> pega o terceiro item, não pausa. ← → escolhe o cliente, <b>Espaço</b> entrega no cliente marcado, <b>Esc</b> solta o item (ou pausa se a mão estiver vazia), botão direito também solta, M muda o som.</p>
             <p>Olho no sósia: <b>Pingo</b> não é <b>Pingo Zero</b>. <b>Detergente</b> não é <b>Amaciante</b>.</p>
           </div>
         </div>

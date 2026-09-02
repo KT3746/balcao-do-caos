@@ -1,7 +1,19 @@
 import { Sfx } from "../audio/sfx";
-import { BUILD_ID, GAME_TITLE, HUD_H_LANDSCAPE, HUD_H_PORTRAIT, SHOP_NAME } from "../config";
-import { TOASTS, productsUnlocked } from "../data/catalog";
-import { createRun, floatText, livesGlyph, maxSlotsFor, tick, toastFor, tryDeliver, tryPickup, type Run, type SimEvent } from "./sim";
+import { BUILD_ID, GAME_TITLE, HUD_H_LANDSCAPE, HUD_H_PORTRAIT, wantsTouchCopy } from "../config";
+import { PRODUCT_BY_ID, TOASTS, productsUnlocked } from "../data/catalog";
+import {
+  createRun,
+  dropHolding,
+  floatText,
+  livesGlyph,
+  maxSlotsFor,
+  tick,
+  toastFor,
+  tryDeliver,
+  tryPickup,
+  type Run,
+  type SimEvent,
+} from "./sim";
 import { loadSave, writeSave } from "../persist";
 import { computeLayout, contains, type PlayLayout } from "../render/layout";
 import { drawProduct, drawShop, hitCustomer, hitProduct, type PointerGhost } from "../render/draw";
@@ -33,6 +45,7 @@ export class Game {
   private cssH = 0;
   private layoutKey = "";
   private hudBand = 0;
+  private hidePauseTimer = 0;
 
   constructor(canvas: HTMLCanvasElement, uiRoot: HTMLElement) {
     const ctx = canvas.getContext("2d", { alpha: false });
@@ -49,15 +62,21 @@ export class Game {
     this.hurtEl = document.getElementById("hurt");
     const shop = document.getElementById("hud-shop");
     if (shop) shop.textContent = GAME_TITLE;
-    const sub = document.getElementById("hud-sub");
-    if (sub) sub.textContent = SHOP_NAME;
     this.bind();
     this.showTitle();
     window.addEventListener("resize", () => this.resize());
     window.addEventListener("orientationchange", () => this.resize());
     document.addEventListener("visibilitychange", () => {
-      this.hidden = document.hidden;
-      if (document.hidden && this.view === "play") this.pause();
+      if (document.hidden) {
+        this.hidden = true;
+        window.clearTimeout(this.hidePauseTimer);
+        this.hidePauseTimer = window.setTimeout(() => {
+          if (document.hidden && this.view === "play" && !this.run?.tutorial) this.pause();
+        }, 2500);
+        return;
+      }
+      window.clearTimeout(this.hidePauseTimer);
+      this.hidden = false;
     });
     const unlock = () => {
       void this.audio.unlock();
@@ -93,13 +112,17 @@ export class Game {
   private bind(): void {
     document.getElementById("btn-pause")?.addEventListener("click", () => this.handle({ type: "pause" }));
     document.getElementById("btn-mute")?.addEventListener("click", () => this.handle({ type: "mute" }));
+    document.getElementById("btn-drop")?.addEventListener("click", () => this.drop());
 
-    this.canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+    this.canvas.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      this.drop();
+    });
     this.canvas.addEventListener("pointerdown", (e) => this.onDown(e));
     this.canvas.addEventListener("pointermove", (e) => this.onMove(e));
     this.canvas.addEventListener("pointerup", (e) => this.onUp(e));
     this.canvas.addEventListener("pointercancel", () => this.clearDrag());
-    window.addEventListener("keydown", (e) => this.onKey(e));
+    window.addEventListener("keydown", (e) => this.onKey(e), true);
 
     document.body.addEventListener(
       "touchmove",
@@ -121,6 +144,10 @@ export class Game {
   private onDown(e: PointerEvent): void {
     if (this.view !== "play" || !this.run || !this.layout) return;
     if (this.run.tutorial || this.run.over) return;
+    if (e.button === 2) {
+      this.drop();
+      return;
+    }
     if (e.button !== 0 && e.pointerType === "mouse") return;
     void this.audio.unlock();
     this.run.lockQueue = true;
@@ -128,7 +155,7 @@ export class Game {
     const cust = hitCustomer(this.layout, this.run, p.x, p.y);
     const prod = hitProduct(this.layout, this.run, p.x, p.y);
     if (!prod && this.tappedBlockedShelf(p.x, p.y)) {
-      this.toast("O gato da loja assumiu a prateleira.");
+      this.toast("O gato da loja assumiu a prateleira.", 1100);
       this.audio.wrong();
       return;
     }
@@ -150,7 +177,9 @@ export class Game {
     if (cust != null) {
       this.selected = cust;
       if (this.run.holding) this.deliver(cust, p);
+      return;
     }
+    if (this.run.holding) this.drop();
   }
 
   private tappedBlockedShelf(x: number, y: number): boolean {
@@ -202,9 +231,49 @@ export class Game {
     this.applyEvent(ev, at);
   }
 
+  private drop(): void {
+    if (!this.run || this.view !== "play") return;
+    if (dropHolding(this.run)) this.audio.click();
+  }
+
+  private waitingCustomers(): { id: number }[] {
+    if (!this.run) return [];
+    return this.run.customers.filter((c) => c.mood === "wait" || c.mood === "enter");
+  }
+
+  private selectedId(): number | null {
+    const waiting = this.waitingCustomers();
+    if (!waiting.length) return null;
+    if (this.selected != null && waiting.some((c) => c.id === this.selected)) return this.selected;
+    this.selected = waiting[0]!.id;
+    return this.selected;
+  }
+
   private onKey(e: KeyboardEvent): void {
+    const playing = this.view === "play" && this.run && !this.run.tutorial;
+    const gameKey =
+      e.code === "Space" ||
+      e.code === "Enter" ||
+      e.code === "Escape" ||
+      e.code.startsWith("Digit") ||
+      e.code.startsWith("Numpad") ||
+      e.code === "ArrowLeft" ||
+      e.code === "ArrowRight" ||
+      e.code === "KeyM" ||
+      e.code === "KeyX";
+    if (playing && gameKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      const ae = document.activeElement;
+      if (ae instanceof HTMLElement && ae.closest("#hud, button")) ae.blur();
+    }
+
     if (e.code === "Escape") {
       if (this.view === "play" && this.run?.tutorial) return;
+      if (playing && this.run?.holding) {
+        this.drop();
+        return;
+      }
       if (this.view === "play") this.pause();
       else if (this.view === "paused") this.resume();
       return;
@@ -213,7 +282,11 @@ export class Game {
       this.handle({ type: "mute" });
       return;
     }
-    if (this.view !== "play" || !this.run || !this.layout || this.run.tutorial) return;
+    if (!playing || !this.run || !this.layout) return;
+    if (e.code === "KeyX") {
+      this.drop();
+      return;
+    }
     const order = this.run.shelfOrder;
     const ids =
       order.length === this.layout.cells.length ? order.slice() : this.layout.cells.map((c) => c.id);
@@ -226,6 +299,14 @@ export class Game {
       Digit6: 5,
       Digit7: 6,
       Digit8: 7,
+      Numpad1: 0,
+      Numpad2: 1,
+      Numpad3: 2,
+      Numpad4: 3,
+      Numpad5: 4,
+      Numpad6: 5,
+      Numpad7: 6,
+      Numpad8: 7,
       KeyQ: 8,
       KeyW: 9,
       KeyE: 10,
@@ -239,23 +320,27 @@ export class Game {
     if (idx != null && ids[idx]) {
       const ev = tryPickup(this.run, ids[idx]!);
       if (ev) this.audio.pickup();
-      e.preventDefault();
       return;
     }
-    const waiting = this.run.customers.filter((c) => c.mood === "wait" || c.mood === "enter");
+    const waiting = this.waitingCustomers();
     if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
       if (!waiting.length) return;
       const i = waiting.findIndex((c) => c.id === this.selected);
       const next = e.code === "ArrowRight" ? i + 1 : i - 1;
       const wrap = (next + waiting.length) % waiting.length;
       this.selected = waiting[wrap]!.id;
-      e.preventDefault();
       return;
     }
     if (e.code === "Space" || e.code === "Enter") {
-      const id = this.selected ?? waiting[0]?.id;
-      if (id != null) this.deliver(id, { x: this.cssW / 2, y: this.cssH * 0.3 });
-      e.preventDefault();
+      const id = this.selectedId();
+      if (id != null) {
+        const c = this.run.customers.find((x) => x.id === id);
+        const slot = c ? this.layout.slots[c.slot] : null;
+        const at = slot
+          ? { x: slot.x + slot.w / 2, y: slot.y + slot.h * 0.4 }
+          : { x: this.cssW / 2, y: this.cssH * 0.28 };
+        this.deliver(id, at);
+      }
     }
   }
 
@@ -264,31 +349,23 @@ export class Game {
     switch (ev.type) {
       case "spawn":
         this.audio.bell();
+        if (this.selected == null) this.selected = this.selectedId();
         break;
       case "deliver": {
         this.audio.cash();
         if (ev.combo >= 3) this.audio.combo(ev.combo);
-        if (at) {
-          floatText(
-            this.run,
-            at.x / Math.max(1, this.cssW),
-            at.y / Math.max(1, this.cssH) - 0.04,
-            `+${ev.score}`,
-            "#2f6b4f",
-          );
-        }
-        if (ev.combo >= 4) this.toast(TOASTS.combo[Math.min(TOASTS.combo.length - 1, ev.combo - 4)]!);
+        this.popScore(ev.score, ev.combo, ev.customerId, at);
         break;
       }
       case "wrong":
         this.audio.wrong();
-        this.toast(TOASTS.wrong[0]!);
+        this.toast(TOASTS.wrong[0]!, 1100);
         break;
       case "rage":
         this.audio.slam();
         this.toast(
           `${ev.name} foi embora — você perdeu uma vida. Restam ${Math.max(0, this.run.lives)}.`,
-          2400,
+          1400,
         );
         this.flashLifeLost();
         break;
@@ -297,7 +374,7 @@ export class Game {
         break;
       case "chaos":
         this.audio.chaos();
-        this.toast(toastFor(ev.kind));
+        this.toast(toastFor(ev.kind), 1200);
         break;
       case "over":
         this.audio.over();
@@ -317,6 +394,7 @@ export class Game {
       if (this.run.turno !== beforeTurno) this.ensureLayout(true);
       for (const ev of events) this.applyEvent(ev);
       if (this.run.over && this.view === "play") this.finish();
+      this.selectedId();
       this.syncHud();
       this.syncBanner();
     }
@@ -427,7 +505,14 @@ export class Game {
     this.ui.root.innerHTML = "";
     this.syncChrome();
     this.resize();
-    this.toast("Toque no produto, depois no cliente. Ou arraste.", 4200);
+    document.getElementById("btn-pause")?.blur();
+    document.getElementById("btn-mute")?.blur();
+    this.toast(
+      wantsTouchCopy()
+        ? "Toque no produto, depois no cliente. Ou arraste."
+        : "Clique no produto, depois no cliente. 1–8 pega o item. Espaço entrega.",
+      2600,
+    );
     this.audio.shift();
   }
 
@@ -546,6 +631,34 @@ export class Game {
         combo.textContent = `Combo ×${this.run.combo}`;
       } else combo.hidden = true;
     }
+    const hand = document.getElementById("hud-hand");
+    const handName = document.getElementById("hud-hand-name");
+    if (hand && handName) {
+      if (this.run.holding) {
+        hand.hidden = false;
+        handName.textContent = PRODUCT_BY_ID[this.run.holding].short;
+      } else {
+        hand.hidden = true;
+        handName.textContent = "—";
+      }
+    }
+  }
+
+  private popScore(score: number, combo: number, customerId: number, at?: { x: number; y: number }): void {
+    if (!this.run || !this.layout) return;
+    const c = this.run.customers.find((x) => x.id === customerId);
+    const slot = c ? this.layout.slots[c.slot] : null;
+    let x = 0.5;
+    let y = 0.22;
+    if (slot) {
+      x = (slot.x + slot.w / 2) / Math.max(1, this.cssW);
+      y = (slot.y + 18) / Math.max(1, this.cssH);
+    } else if (at) {
+      x = at.x / Math.max(1, this.cssW);
+      y = at.y / Math.max(1, this.cssH) - 0.04;
+    }
+    floatText(this.run, x, y, `+${score}`, "#e3b23c");
+    if (combo >= 2) floatText(this.run, x, y - 0.045, `Combo ×${combo}`, "#7dff9a");
   }
 
   private syncBanner(): void {
@@ -556,7 +669,7 @@ export class Game {
     } else this.bannerEl.hidden = true;
   }
 
-  private toast(text: string, ms = 1600): void {
+  private toast(text: string, ms = 1100): void {
     this.toastEl.hidden = false;
     this.toastEl.textContent = text;
     window.clearTimeout(this.toastTimer);

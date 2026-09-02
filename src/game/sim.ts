@@ -49,7 +49,7 @@ export type Particle = {
 export type SimEvent =
   | { type: "spawn"; name: string }
   | { type: "pickup"; id: ProductId }
-  | { type: "deliver"; score: number; combo: number; done: boolean; name: string }
+  | { type: "deliver"; score: number; combo: number; done: boolean; name: string; customerId: number }
   | { type: "wrong"; name: string }
   | { type: "rage"; name: string }
   | { type: "shift"; turno: number }
@@ -136,7 +136,7 @@ export function spawnInterval(turno: number): number {
 }
 
 export function patienceFor(turno: number, items: number, special: boolean): number {
-  const base = turno <= 1 ? 38 : Math.max(7.2, 18.2 - turno * 2.15);
+  const base = turno <= 1 ? 44 : Math.max(8, 18.2 - turno * 2.15);
   const extra = (items - 1) * 3.1;
   return (base + extra) * (special ? 0.72 : 1);
 }
@@ -198,13 +198,19 @@ export function spawnCustomer(run: Run): SimEvent | null {
     special,
   };
   if (run.first) {
-    c.patienceMax *= 1.45;
+    c.patienceMax *= 1.5;
     c.patience = c.patienceMax;
   }
   run.customers.push(c);
   run.first = false;
   run.spawnIn = spawnInterval(run.turno);
   return { type: "spawn", name: arch.name };
+}
+
+export function dropHolding(run: Run): boolean {
+  if (run.over || run.tutorial || !run.holding) return false;
+  run.holding = null;
+  return true;
 }
 
 export function tryPickup(run: Run, id: ProductId): SimEvent | null {
@@ -261,7 +267,7 @@ export function tryDeliver(run: Run, customerId: number, at?: { x: number; y: nu
     run.hint = "Isso. Mantém o ritmo.";
     run.hintT = 2.4;
   }
-  return { type: "deliver", score: gain, combo: run.combo, done, name: arch.name };
+  return { type: "deliver", score: gain, combo: run.combo, done, name: arch.name, customerId: c.id };
 }
 
 function burst(run: Run, x: number, y: number, color: string, n: number): void {
@@ -285,12 +291,12 @@ export function floatText(run: Run, x: number, y: number, text: string, color: s
     x,
     y,
     vx: 0,
-    vy: -0.12,
-    life: 0.9,
-    max: 0.9,
+    vy: -0.08,
+    life: 1.15,
+    max: 1.15,
     text,
     color,
-    size: 14,
+    size: 22,
     kind: "float",
   });
 }
@@ -396,7 +402,7 @@ export function tick(run: Run, dt: number): SimEvent[] {
       c.anim = Math.min(1, c.anim + dt * 2.4);
       if (c.anim >= 1) c.mood = "wait";
     } else if (c.mood === "wait") {
-      const drain = run.turno <= 1 ? simDt * 0.58 : simDt;
+      const drain = run.turno <= 1 ? simDt * 0.38 : simDt;
       c.patience -= drain;
       if (c.patience / c.patienceMax < 0.34 && c.phraseT <= 0) {
         const arch = ARCHETYPES.find((a) => a.id === c.arch);

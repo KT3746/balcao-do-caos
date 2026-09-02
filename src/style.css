@@ -75,7 +75,8 @@ body.is-play {
 #hud[hidden],
 #toast[hidden],
 #banner[hidden],
-#hurt[hidden] {
+#hurt[hidden],
+#hud-hand[hidden] {
   display: none !important;
 }
 
@@ -105,7 +106,7 @@ body.is-play {
 
 .hud-shop {
   font-family: var(--font-display);
-  font-size: clamp(18px, 4.2vw, 26px);
+  font-size: clamp(20px, 5vw, 28px);
   line-height: 1.05;
   color: var(--cream);
   text-align: center;
@@ -113,20 +114,10 @@ body.is-play {
   pointer-events: none;
 }
 
-.hud-sub {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--gold);
-  text-align: center;
-  margin-top: 2px;
-}
-
 .hud-row {
   display: grid;
-  grid-template-columns: minmax(72px, auto) minmax(88px, 1fr) auto;
-  grid-template-areas: "left mid right";
+  grid-template-columns: minmax(140px, auto) 1fr auto;
+  grid-template-areas: "left hand right";
   align-items: start;
   gap: 8px;
 }
@@ -135,10 +126,29 @@ body.is-play {
   grid-area: left;
 }
 
-.hud-cluster.mid {
-  grid-area: mid;
+.hud-hand {
+  grid-area: hand;
   justify-self: center;
+  background: var(--panel);
+  border: 2px solid rgba(227, 178, 60, 0.55);
+  border-radius: 14px;
+  padding: 6px 10px;
+  min-width: 88px;
   text-align: center;
+  pointer-events: auto;
+}
+
+#hud-hand-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--gold);
+  line-height: 1.1;
+}
+
+.hud-hand .icon-btn {
+  min-height: 36px;
+  margin-top: 4px;
+  width: 100%;
 }
 
 #hud .right,
@@ -152,18 +162,22 @@ body.is-play {
   justify-self: end;
 }
 
-.hud-cluster.left,
-.hud-cluster.mid {
+.hud-cluster.left {
   background: var(--panel);
   border: 2px solid rgba(227, 178, 60, 0.35);
   border-radius: 14px;
   padding: 8px 12px;
   min-width: 88px;
-  flex: 0 0 auto;
 }
 
-.hud-cluster.left {
-  min-height: 58px;
+.hud-score-line {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.hud-turno-box {
+  text-align: center;
 }
 
 .hud-label {
@@ -184,7 +198,8 @@ body.is-play {
   margin-top: 4px;
   font-weight: 800;
   color: #7dff9a;
-  font-size: 13px;
+  font-size: 16px;
+  text-shadow: 0 0 8px rgba(125, 255, 154, 0.45);
 }
 
 #hud-turno {
@@ -238,28 +253,30 @@ body.is-play {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 8;
+  z-index: 9;
   pointer-events: none;
   background: var(--panel);
   color: var(--cream);
   border: 2px solid rgba(227, 178, 60, 0.4);
   border-radius: 999px;
-  padding: 8px 16px;
+  padding: 6px 14px;
   font-weight: 700;
   text-align: center;
-  max-width: min(92vw, 460px);
+  max-width: min(78vw, 340px);
 }
 
 #toast {
-  bottom: calc(18px + var(--safe-b));
+  top: calc(var(--safe-t) + 112px);
+  bottom: auto;
+  font-size: 14px;
 }
 
 #banner {
-  top: 30%;
+  top: 38%;
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 20px;
   border-radius: 16px;
-  padding: 14px 22px;
+  padding: 12px 18px;
   background: rgba(42, 29, 18, 0.9);
 }
 
@@ -431,11 +448,15 @@ h2 {
     grid-template-columns: 1fr auto;
     grid-template-areas:
       "left right"
-      "mid mid";
+      "hand hand";
     row-gap: 6px;
   }
-  .hud-cluster.mid {
-    justify-self: center;
+  .hud-hand {
+    justify-self: stretch;
+  }
+  #toast {
+    top: calc(var(--safe-t) + 128px);
+    max-width: min(72vw, 280px);
   }
 }
 
@@ -447,10 +468,9 @@ h2 {
     font-size: 22px;
   }
   .hud-shop {
-    font-size: 18px;
+    font-size: 20px;
   }
-  .hud-cluster.left,
-  .hud-cluster.mid {
+  .hud-cluster.left {
     padding: 6px 8px;
     min-width: 72px;
   }

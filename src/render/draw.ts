@@ -1,3 +1,4 @@
+import { wantsTouchCopy } from "../config";
 import { ARCHETYPES, PRODUCT_BY_ID } from "../data/catalog";
 import type { Customer, Particle, Run } from "../game/sim";
 import type { ProductId } from "../types";
@@ -52,7 +53,6 @@ export function drawShop(
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
   }
-  if (run.hint) drawHint(ctx, layout, run.hint);
   if (selectedId != null) {
     const c = run.customers.find((x) => x.id === selectedId);
     if (c) {
@@ -141,7 +141,8 @@ function paintShelves(ctx: CanvasRenderingContext2D, layout: PlayLayout, run: Ru
   roundRect(ctx, s.x, s.y, s.w, s.h, 12);
   ctx.fill();
   const cells = applyShelfOrder(layout.cells, run.shelfOrder.length === layout.cells.length ? run.shelfOrder : layout.cells.map((c) => c.id));
-  for (const cell of cells) {
+  const showKeys = !wantsTouchCopy();
+  cells.forEach((cell, i) => {
     const blocked = catBlocks(run, layout, cell.rect);
     ctx.fillStyle = blocked ? "rgba(20, 20, 20, 0.35)" : "rgba(247, 236, 212, 0.92)";
     roundRect(ctx, cell.rect.x, cell.rect.y, cell.rect.w, cell.rect.h, 10);
@@ -161,7 +162,19 @@ function paintShelves(ctx: CanvasRenderingContext2D, layout: PlayLayout, run: Ru
     ctx.font = `800 ${Math.max(10, Math.min(13, cell.rect.w * 0.16))}px Nunito, sans-serif`;
     ctx.textAlign = "center";
     ctx.fillText(p.short, cx, cell.rect.y + cell.rect.h - 10, cell.rect.w - 8);
-  }
+    const key = showKeys ? shelfKeyLabel(i) : null;
+    if (key) {
+      ctx.fillStyle = "rgba(42,29,18,0.45)";
+      ctx.font = "800 10px Nunito, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(key, cell.rect.x + 6, cell.rect.y + 14);
+    }
+  });
+}
+
+function shelfKeyLabel(i: number): string | null {
+  const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "Q", "W", "E", "R", "A", "S", "D", "F"];
+  return keys[i] ?? null;
 }
 
 function catBlocks(run: Run, layout: PlayLayout, rect: Rect): boolean {
@@ -291,26 +304,31 @@ function drawCustomer(ctx: CanvasRenderingContext2D, c: Customer, layout: PlayLa
   ctx.stroke();
   ctx.restore();
 
+  const barH = 12;
   const barW = slot.w - 16;
   const barX = slot.x + 8 + ox;
   const barY = slot.y + 8 + oy;
-  ctx.fillStyle = "rgba(42,29,18,0.45)";
-  roundRect(ctx, barX, barY, barW, 8, 4);
+  ctx.fillStyle = "rgba(42,29,18,0.7)";
+  roundRect(ctx, barX, barY, barW, barH, 6);
   ctx.fill();
+  ctx.strokeStyle = "rgba(247, 236, 212, 0.45)";
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, barX, barY, barW, barH, 6);
+  ctx.stroke();
   const ratio = clamp01(c.patience / c.patienceMax);
-  ctx.fillStyle = ratio > 0.5 ? "#2f6b4f" : ratio > 0.28 ? "#e3b23c" : "#c4491d";
-  roundRect(ctx, barX, barY, Math.max(4, barW * ratio), 8, 4);
+  ctx.fillStyle = ratio > 0.5 ? "#3d8f4a" : ratio > 0.28 ? "#e3b23c" : "#c4491d";
+  roundRect(ctx, barX + 1, barY + 1, Math.max(6, (barW - 2) * ratio), barH - 2, 5);
   ctx.fill();
 
   ctx.fillStyle = "#2a1d12";
   ctx.font = "800 12px Nunito, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText(c.special ? `${arch.name} ★` : arch.name, slot.x + slot.w / 2 + ox, barY + 22, slot.w - 8);
+  ctx.fillText(c.special ? `${arch.name} ★` : arch.name, slot.x + slot.w / 2 + ox, barY + 26, slot.w - 8);
 
   const bubbleW = slot.w - 8;
   const bubbleH = Math.min(88, Math.max(58, slot.h * 0.4));
   const bx = slot.x + 4 + ox;
-  const by = slot.y + 28 + oy;
+  const by = slot.y + 32 + oy;
   ctx.fillStyle = c.mood === "rage" ? "#f3d0c6" : "#fff8ea";
   roundRect(ctx, bx, by, bubbleW, bubbleH, 10);
   ctx.fill();
@@ -563,8 +581,11 @@ function drawParticles(ctx: CanvasRenderingContext2D, parts: Particle[], layout:
     ctx.globalAlpha = a;
     if (p.text) {
       ctx.fillStyle = p.color;
-      ctx.font = "800 16px Nunito, sans-serif";
+      ctx.font = `800 ${Math.max(18, p.size)}px Nunito, sans-serif`;
       ctx.textAlign = "center";
+      ctx.strokeStyle = "rgba(42,29,18,0.55)";
+      ctx.lineWidth = 4;
+      ctx.strokeText(p.text, x, y);
       ctx.fillText(p.text, x, y);
     } else {
       ctx.fillStyle = p.color;
@@ -578,19 +599,6 @@ function drawParticles(ctx: CanvasRenderingContext2D, parts: Particle[], layout:
     }
     ctx.globalAlpha = 1;
   }
-}
-
-function drawHint(ctx: CanvasRenderingContext2D, layout: PlayLayout, text: string): void {
-  ctx.fillStyle = "rgba(42,29,18,0.86)";
-  const w = Math.min(layout.w - 24, 420);
-  const x = (layout.w - w) / 2;
-  const y = layout.shelves.y + layout.shelves.h - 34;
-  roundRect(ctx, x, y, w, 28, 14);
-  ctx.fill();
-  ctx.fillStyle = "#f7ecd4";
-  ctx.font = "700 13px Nunito, sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText(text, layout.w / 2, y + 19, w - 16);
 }
 
 function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, max: number, lh: number): void {

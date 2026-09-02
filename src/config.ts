@@ -1,7 +1,7 @@
 export const GAME_TITLE = "Balcão do Caos";
 export const SHOP_NAME = "Mercadinho do Caos";
-export const HUD_H_PORTRAIT = 168;
-export const HUD_H_LANDSCAPE = 108;
+export const HUD_H_PORTRAIT = 148;
+export const HUD_H_LANDSCAPE = 100;
 export const SAVE_KEY = "balcao-do-caos-v1";
 export const TOUCH_VIEWPORT_MAX = 820;
 export const START_LIVES = 3;
@@ -29,6 +29,17 @@ export const wantsTouchControls = (): boolean => {
   }
   const points = typeof navigator !== "undefined" ? navigator.maxTouchPoints : 0;
   return isPhoneViewport() || coarse || points > 0;
+};
+
+/** Copy/toasts: mouse + tela larga = "clique", mesmo se o aparelho também tiver toque. */
+export const wantsTouchCopy = (): boolean => {
+  if (typeof window === "undefined") return false;
+  try {
+    if (window.matchMedia("(pointer: fine)").matches && layoutWidth() >= TOUCH_VIEWPORT_MAX) return false;
+  } catch {
+    /* ignore */
+  }
+  return isPhoneViewport() || wantsTouchControls();
 };
 
 export function clamp(v: number, lo: number, hi: number): number {
