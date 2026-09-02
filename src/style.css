@@ -482,18 +482,29 @@ h2 {
 }
 
 @media (max-width: 700px) {
+  /* Flex + wrap: "Na mão" cai sozinho na linha de baixo e não cobre Pontos/Turno/vidas/botões. */
   .hud-row {
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      "left right"
-      "hand hand";
-    row-gap: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .hud-cluster.left {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .hud-cluster.right {
+    flex: 0 0 auto;
   }
   .hud-hand {
+    flex: 1 0 100%;
+    width: 100%;
+    max-width: 100%;
     justify-self: stretch;
   }
   .toast-stack {
-    top: calc(var(--safe-t) + 128px);
+    top: calc(var(--safe-t) + 168px);
     max-width: min(72vw, 280px);
   }
 }
@@ -511,5 +522,8 @@ h2 {
   .hud-cluster.left {
     padding: 6px 8px;
     min-width: 72px;
+  }
+  .hud-score-line {
+    gap: 8px;
   }
 }
