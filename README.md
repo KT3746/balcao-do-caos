@@ -1,6 +1,6 @@
 # Balcão do Caos
 
-Atenda o **Balcão do Caos** (no Mercadinho do Caos) antes da paciência da fila acabar. Jogo **original** no navegador — nenhuma marca real, mascote emprestado ou IP de terceiros.
+Atenda o **Balcão do Caos** antes da paciência da fila acabar. Jogo **original** no navegador — nenhuma marca real, mascote emprestado ou IP de terceiros.
 
 **Jogar agora:** [https://kt3746.github.io/balcao-do-caos/](https://kt3746.github.io/balcao-do-caos/)
 

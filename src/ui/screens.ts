@@ -1,3 +1,5 @@
+import { GAME_TITLE } from "../config";
+
 export type UiAction =
   | { type: "play" }
   | { type: "how" }
@@ -38,8 +40,7 @@ export class Screens {
         <div class="screen-body">
           <div class="topbar">
             <div class="brand">
-              <div class="eyebrow">Mercadinho do Caos</div>
-              <h1>Balcão do Caos</h1>
+              <h1>${GAME_TITLE}</h1>
               <p class="lede">Clientes pedem. Você pega o produto certo. A paciência acaba primeiro — a não ser que você seja mais rápido.</p>
               ${best > 0 ? `<p class="best">Recorde local: <b>${best}</b></p>` : ""}
             </div>
@@ -85,7 +86,7 @@ export class Screens {
           <div class="eyebrow">Ficha técnica</div>
           <h2>Créditos</h2>
           <div class="sheet">
-            <p><b>Balcão do Caos</b> é um jogo original de atendimento no navegador. Nenhuma marca de mercado real, mascote emprestado ou IP de terceiros — só uma esquina inventada e uma fila impaciente.</p>
+            <p><b>${GAME_TITLE}</b> é um jogo original de atendimento no navegador. Nenhuma marca de mercado real, mascote emprestado ou IP de terceiros — só uma esquina inventada e uma fila impaciente.</p>
             <p>Canvas 2D · TypeScript · Vite · áudio procedural (Web Audio). Feito para celular e computador.</p>
             <p>MIT · KT3746</p>
           </div>
@@ -106,8 +107,7 @@ export class Screens {
     this.set(`
       <section class="overlay intro-overlay">
         <div class="panel">
-          <div class="eyebrow">Mercadinho do Caos</div>
-          <h2>Balcão do Caos</h2>
+          <h2>${GAME_TITLE}</h2>
           <p class="lede">A fila só anda quando você fechar este recado. Ninguém perde vida enquanto lê.</p>
           <div class="sheet">
             <p><b>1.</b> ${grab}</p>

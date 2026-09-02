@@ -1,5 +1,6 @@
 export const GAME_TITLE = "Balcão do Caos";
-export const SHOP_NAME = "Mercadinho do Caos";
+/** Mesmo nome do jogo: é o que o jogador lê no menu, no HUD e na aba. */
+export const SHOP_NAME = GAME_TITLE;
 export const HUD_H_PORTRAIT = 148;
 export const HUD_H_LANDSCAPE = 100;
 export const SAVE_KEY = "balcao-do-caos-v1";
