@@ -16,14 +16,14 @@ export class Sfx {
     const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     this.ctx = new Ctx();
     this.master = this.ctx.createGain();
-    this.master.gain.value = this.muted ? 0 : 0.28;
+    this.master.gain.value = this.muted ? 0 : 0.3;
     this.master.connect(this.ctx.destination);
     // Sem zumbido/ambiente contínuo — só efeitos curtos nas ações.
   }
 
   setMuted(muted: boolean): void {
     this.muted = muted;
-    if (this.master) this.master.gain.value = muted ? 0 : 0.28;
+    if (this.master) this.master.gain.value = muted ? 0 : 0.3;
   }
 
   toggleMute(): boolean {
@@ -46,53 +46,82 @@ export class Sfx {
     o.stop(this.ctx.currentTime + dur + 0.02);
   }
 
+  private blip(freq: number, dur: number, type: OscillatorType, gain: number, delay = 0): void {
+    if (!this.ctx || !this.master || this.muted) return;
+    const t0 = this.ctx.currentTime + delay;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(gain, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+    o.connect(g);
+    g.connect(this.master);
+    o.start(t0);
+    o.stop(t0 + dur + 0.02);
+  }
+
   bell(): void {
-    this.tone(880, 0.12, "sine", 0.09);
-    this.tone(1320, 0.18, "triangle", 0.05);
+    this.tone(880, 0.1, "sine", 0.08);
+    this.tone(1320, 0.16, "triangle", 0.045);
+    this.blip(1760, 0.08, "sine", 0.025, 0.04);
   }
 
   pickup(): void {
-    this.tone(420, 0.07, "square", 0.05);
-    this.tone(640, 0.09, "triangle", 0.06);
+    this.blip(380, 0.05, "square", 0.04);
+    this.blip(560, 0.07, "triangle", 0.055, 0.02);
+    this.blip(780, 0.09, "sine", 0.035, 0.05);
   }
 
   cash(): void {
-    this.tone(523, 0.07, "square", 0.06);
-    this.tone(784, 0.12, "triangle", 0.07);
-    this.tone(1046, 0.16, "sine", 0.04);
+    this.blip(523, 0.06, "square", 0.055);
+    this.blip(659, 0.08, "triangle", 0.05, 0.04);
+    this.blip(784, 0.1, "triangle", 0.06, 0.08);
+    this.blip(1046, 0.14, "sine", 0.04, 0.12);
   }
 
   combo(n: number): void {
-    const f = 520 + Math.min(8, n) * 40;
-    this.tone(f, 0.1, "triangle", 0.07);
-    this.tone(f * 1.5, 0.14, "sine", 0.05);
+    const tier = Math.min(8, Math.max(1, n));
+    const base = 480 + tier * 48;
+    this.blip(base, 0.08, "triangle", 0.06);
+    this.blip(base * 1.25, 0.1, "sine", 0.045, 0.04);
+    if (tier >= 3) this.blip(base * 1.5, 0.12, "sine", 0.04, 0.08);
+    if (tier >= 5) this.blip(base * 1.85, 0.14, "triangle", 0.035, 0.12);
+    if (tier >= 7) this.blip(base * 2.2, 0.16, "sine", 0.03, 0.16);
   }
 
   wrong(): void {
-    this.tone(180, 0.16, "sawtooth", 0.08, 90);
+    this.tone(210, 0.12, "sawtooth", 0.07, 110);
+    this.blip(140, 0.14, "square", 0.045, 0.05);
   }
 
   slam(): void {
-    this.tone(90, 0.22, "sawtooth", 0.11, 50);
+    this.tone(95, 0.2, "sawtooth", 0.1, 48);
+    this.blip(70, 0.16, "square", 0.05, 0.04);
   }
 
   shift(): void {
-    this.tone(392, 0.1, "triangle", 0.06);
-    window.setTimeout(() => this.tone(523, 0.12, "triangle", 0.06), 90);
-    window.setTimeout(() => this.tone(659, 0.16, "triangle", 0.07), 180);
+    this.blip(392, 0.09, "triangle", 0.055);
+    this.blip(494, 0.1, "triangle", 0.055, 0.08);
+    this.blip(587, 0.11, "triangle", 0.06, 0.16);
+    this.blip(740, 0.14, "sine", 0.045, 0.24);
   }
 
   over(): void {
-    this.tone(330, 0.18, "triangle", 0.07, 200);
-    window.setTimeout(() => this.tone(247, 0.22, "sine", 0.07, 140), 160);
-    window.setTimeout(() => this.tone(196, 0.3, "sine", 0.08, 110), 320);
+    this.tone(349, 0.16, "triangle", 0.065, 220);
+    this.blip(277, 0.2, "sine", 0.06, 0.14);
+    this.blip(220, 0.26, "sine", 0.07, 0.3);
+    this.blip(165, 0.32, "triangle", 0.05, 0.48);
   }
 
   chaos(): void {
-    this.tone(200, 0.2, "square", 0.04, 140);
+    this.tone(220, 0.14, "square", 0.04, 150);
+    this.blip(160, 0.12, "sawtooth", 0.03, 0.06);
   }
 
   click(): void {
-    this.tone(700, 0.05, "square", 0.035);
+    this.blip(820, 0.035, "square", 0.03);
+    this.blip(1100, 0.03, "triangle", 0.018, 0.015);
   }
 }
