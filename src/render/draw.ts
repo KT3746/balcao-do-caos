@@ -56,10 +56,19 @@ export function drawShop(
     if (c) {
       const r = layout.slots[c.slot];
       if (r) {
-        ctx.strokeStyle = "rgba(227, 178, 60, 0.9)";
-        ctx.lineWidth = 3;
-        roundRect(ctx, r.x - 2, r.y - 2, r.w + 4, r.h + 4, 16);
+        ctx.save();
+        ctx.shadowColor = "rgba(227, 178, 60, 0.65)";
+        ctx.shadowBlur = 10;
+        ctx.strokeStyle = "rgba(227, 178, 60, 1)";
+        ctx.lineWidth = 4;
+        roundRect(ctx, r.x - 3, r.y - 3, r.w + 6, r.h + 6, 16);
         ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "rgba(247, 236, 212, 0.35)";
+        ctx.lineWidth = 1.5;
+        roundRect(ctx, r.x - 1, r.y - 1, r.w + 2, r.h + 2, 14);
+        ctx.stroke();
+        ctx.restore();
       }
     }
   }
@@ -92,32 +101,55 @@ function paintQueueZone(ctx: CanvasRenderingContext2D, layout: PlayLayout): void
 
 function paintShelves(ctx: CanvasRenderingContext2D, layout: PlayLayout, run: Run, t: number): void {
   const s = layout.shelves;
-  ctx.fillStyle = "#1a1410";
-  roundRect(ctx, s.x - 6, s.y - 6, s.w + 12, s.h + 12, 14);
+  ctx.fillStyle = "#12100c";
+  roundRect(ctx, s.x - 8, s.y - 8, s.w + 16, s.h + 16, 16);
   ctx.fill();
-  ctx.fillStyle = "#1e2e24";
-  roundRect(ctx, s.x, s.y, s.w, s.h, 12);
+  const shelfGrad = ctx.createLinearGradient(s.x, s.y, s.x, s.y + s.h);
+  shelfGrad.addColorStop(0, "#24362c");
+  shelfGrad.addColorStop(1, "#16241c");
+  ctx.fillStyle = shelfGrad;
+  roundRect(ctx, s.x, s.y, s.w, s.h, 13);
   ctx.fill();
+  ctx.strokeStyle = "rgba(227, 178, 60, 0.22)";
+  ctx.lineWidth = 2;
+  roundRect(ctx, s.x + 1, s.y + 1, s.w - 2, s.h - 2, 12);
+  ctx.stroke();
   const cells = applyShelfOrder(layout.cells, run.shelfOrder.length === layout.cells.length ? run.shelfOrder : layout.cells.map((c) => c.id));
   const showKeys = !wantsTouchCopy();
   cells.forEach((cell, i) => {
     const blocked = catBlocks(run, layout, cell.rect);
-    ctx.fillStyle = blocked ? "rgba(8, 8, 8, 0.55)" : "rgba(42, 34, 26, 0.98)";
+    const cellGrad = ctx.createLinearGradient(cell.rect.x, cell.rect.y, cell.rect.x, cell.rect.y + cell.rect.h);
+    if (blocked) {
+      cellGrad.addColorStop(0, "rgba(10, 10, 10, 0.72)");
+      cellGrad.addColorStop(1, "rgba(6, 6, 6, 0.8)");
+    } else {
+      cellGrad.addColorStop(0, "rgba(48, 38, 28, 0.98)");
+      cellGrad.addColorStop(1, "rgba(28, 22, 16, 0.98)");
+    }
+    ctx.fillStyle = cellGrad;
     roundRect(ctx, cell.rect.x, cell.rect.y, cell.rect.w, cell.rect.h, 12);
     ctx.fill();
-    ctx.strokeStyle = "rgba(227, 178, 60, 0.28)";
+    ctx.strokeStyle = "rgba(227, 178, 60, 0.34)";
     ctx.lineWidth = 2;
     roundRect(ctx, cell.rect.x, cell.rect.y, cell.rect.w, cell.rect.h, 12);
     ctx.stroke();
+    ctx.strokeStyle = "rgba(247, 236, 212, 0.08)";
+    ctx.lineWidth = 1;
+    roundRect(ctx, cell.rect.x + 2, cell.rect.y + 2, cell.rect.w - 4, cell.rect.h - 4, 10);
+    ctx.stroke();
     if (run.holding === cell.id) {
+      ctx.save();
+      ctx.shadowColor = "rgba(227, 178, 60, 0.7)";
+      ctx.shadowBlur = 12;
       ctx.strokeStyle = "#e3b23c";
-      ctx.lineWidth = 3.5;
+      ctx.lineWidth = 4;
       roundRect(ctx, cell.rect.x + 1, cell.rect.y + 1, cell.rect.w - 2, cell.rect.h - 2, 11);
       ctx.stroke();
+      ctx.restore();
     }
     const cx = cell.rect.x + cell.rect.w / 2;
-    const cy = cell.rect.y + cell.rect.h * 0.38;
-    const size = Math.min(cell.rect.w, cell.rect.h) * 0.58;
+    const cy = cell.rect.y + cell.rect.h * 0.36;
+    const size = Math.min(cell.rect.w, cell.rect.h) * 0.68;
     drawProduct(ctx, cell.id, cx, cy, size, t, run.holding === cell.id);
     const p = PRODUCT_BY_ID[cell.id];
     const labelSize = Math.max(12, Math.min(16, cell.rect.w * 0.2));
@@ -232,20 +264,25 @@ function drawCustomer(ctx: CanvasRenderingContext2D, c: Customer, layout: PlayLa
   ctx.stroke();
   ctx.restore();
 
-  const barH = 12;
-  const barW = Math.min(slot.w - 16, 132);
+  const barH = 14;
+  const barW = Math.min(slot.w - 14, 140);
   const barX = slot.x + (slot.w - barW) / 2 + ox;
-  const barY = slot.y + 8 + oy;
-  ctx.fillStyle = "rgba(42,29,18,0.7)";
-  roundRect(ctx, barX, barY, barW, barH, 6);
+  const barY = slot.y + 7 + oy;
+  ctx.fillStyle = "rgba(12, 10, 8, 0.82)";
+  roundRect(ctx, barX, barY, barW, barH, 7);
   ctx.fill();
-  ctx.strokeStyle = "rgba(247, 236, 212, 0.45)";
-  ctx.lineWidth = 1.5;
-  roundRect(ctx, barX, barY, barW, barH, 6);
+  ctx.strokeStyle = "rgba(247, 236, 212, 0.55)";
+  ctx.lineWidth = 2;
+  roundRect(ctx, barX, barY, barW, barH, 7);
   ctx.stroke();
   const ratio = clamp01(c.patience / c.patienceMax);
-  ctx.fillStyle = ratio > 0.5 ? "#3d8f4a" : ratio > 0.28 ? "#e3b23c" : "#c4491d";
-  roundRect(ctx, barX + 1, barY + 1, Math.max(6, (barW - 2) * ratio), barH - 2, 5);
+  const fillW = Math.max(5, (barW - 4) * ratio);
+  const barColor = ratio > 0.5 ? "#4caf5a" : ratio > 0.28 ? "#e3b23c" : "#e05228";
+  ctx.fillStyle = barColor;
+  roundRect(ctx, barX + 2, barY + 2, fillW, barH - 4, 5);
+  ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,0.22)";
+  roundRect(ctx, barX + 2, barY + 2, fillW, Math.max(2, (barH - 4) * 0.35), 4);
   ctx.fill();
 
   ctx.fillStyle = "#e8dcc8";
@@ -338,10 +375,10 @@ export function drawProduct(
   ctx.save();
   ctx.translate(x, y);
   if (glow) {
-    ctx.shadowColor = "rgba(227,178,60,0.55)";
-    ctx.shadowBlur = 12;
+    ctx.shadowColor = "rgba(227,178,60,0.75)";
+    ctx.shadowBlur = 18;
   }
-  const bob = Math.sin(t * 3 + x * 0.01) * (glow ? 1.5 : 0.4);
+  const bob = Math.sin(t * 3 + x * 0.01) * (glow ? 2 : 0.45);
   ctx.translate(0, bob);
   switch (id) {
     case "guarana":
@@ -502,31 +539,52 @@ function sun(ctx: CanvasRenderingContext2D, r: number): void {
   ctx.fill();
 }
 
+function drawSparkStar(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): void {
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const a = -Math.PI / 2 + (i * Math.PI * 2) / 5;
+    const b = a + Math.PI / 5;
+    ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+    ctx.lineTo(x + Math.cos(b) * r * 0.42, y + Math.sin(b) * r * 0.42);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+
 function drawParticles(ctx: CanvasRenderingContext2D, parts: Particle[], layout: PlayLayout): void {
   for (const p of parts) {
     const x = p.x * layout.w;
     const y = p.y * layout.h;
     const a = clamp01(p.life / p.max);
+    ctx.save();
     ctx.globalAlpha = a;
     if (p.text) {
       ctx.fillStyle = p.color;
-      ctx.font = `800 ${Math.max(18, p.size)}px Nunito, sans-serif`;
+      ctx.font = `800 ${Math.max(20, p.size)}px Nunito, sans-serif`;
       ctx.textAlign = "center";
-      ctx.strokeStyle = "rgba(42,29,18,0.55)";
-      ctx.lineWidth = 4;
+      ctx.shadowColor = "rgba(0,0,0,0.55)";
+      ctx.shadowBlur = 6;
+      ctx.strokeStyle = "rgba(12,10,8,0.75)";
+      ctx.lineWidth = 5;
       ctx.strokeText(p.text, x, y);
       ctx.fillText(p.text, x, y);
     } else {
       ctx.fillStyle = p.color;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = p.kind === "star" ? 10 : 6;
       if (p.kind === "star") {
-        ctx.beginPath();
-        ctx.arc(x, y, p.size, 0, Math.PI * 2);
-        ctx.fill();
+        drawSparkStar(ctx, x, y, Math.max(3, p.size * 1.15));
       } else {
-        ctx.fillRect(x, y, p.size, p.size);
+        ctx.beginPath();
+        ctx.arc(x, y, Math.max(2, p.size * 0.55), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = a * 0.45;
+        ctx.beginPath();
+        ctx.arc(x - p.size * 0.35, y + p.size * 0.2, Math.max(1.2, p.size * 0.28), 0, Math.PI * 2);
+        ctx.fill();
       }
     }
-    ctx.globalAlpha = 1;
+    ctx.restore();
   }
 }
 
