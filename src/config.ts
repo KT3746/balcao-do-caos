@@ -5,11 +5,11 @@ export const HUD_H_PORTRAIT = 148;
 export const HUD_H_LANDSCAPE = 100;
 export const SAVE_KEY = "mercadinho-v1";
 export const TOUCH_VIEWPORT_MAX = 820;
-export const START_LIVES = 3;
+export const START_LIVES = 4;
 export const MAX_SLOTS = 4;
 export const MAX_COMBO = 12;
 export const COMBO_WINDOW = 3.8;
-export const TURNO_SECS = 48;
+export const TURNO_SECS = 75;
 export const BUILD_ID = typeof __BUILD_ID__ === "string" ? __BUILD_ID__ : "dev";
 
 export const layoutWidth = (): number => {
