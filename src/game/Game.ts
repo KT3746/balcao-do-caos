@@ -51,7 +51,7 @@ export class Game {
 
   constructor(canvas: HTMLCanvasElement, uiRoot: HTMLElement) {
     const ctx = canvas.getContext("2d", { alpha: false });
-    if (!ctx) throw new Error("Balcão do Caos: canvas 2D indisponível");
+    if (!ctx) throw new Error("MERCADINHO: canvas 2D indisponível");
     this.canvas = canvas;
     this.ctx = ctx;
     this.ui = new Screens(uiRoot);
@@ -77,7 +77,7 @@ export class Game {
     window.addEventListener("pointerdown", unlock);
     window.addEventListener("keydown", unlock);
     this.resize();
-    console.info(`Balcão do Caos build ${BUILD_ID}`);
+    console.info(`MERCADINHO build ${BUILD_ID}`);
   }
 
   start(): void {
@@ -94,7 +94,7 @@ export class Game {
       try {
         this.tick(dt);
       } catch (err) {
-        console.error("Balcão do Caos: falha no frame", err);
+        console.error("MERCADINHO: falha no frame", err);
       }
     };
     requestAnimationFrame(loop);

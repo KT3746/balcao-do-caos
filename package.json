@@ -1,9 +1,9 @@
 {
-  "name": "balcao-do-caos",
+  "name": "mercadinho",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Balcão do Caos — atenda clientes numa lojinha antes deles pirarem",
+  "description": "MERCADINHO — atenda clientes numa lojinha antes deles pirarem",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
