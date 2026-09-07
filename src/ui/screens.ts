@@ -61,7 +61,7 @@ export class Screens {
     this.set(`
       <section class="screen solid">
         <div class="screen-body">
-          <div class="eyebrow">Manual de balcão</div>
+          <div class="eyebrow">Manual do mercadinho</div>
           <h2>Como jogar</h2>
           <div class="sheet">
             <p><b>1.</b> O cliente chega com um (ou mais) produtos no balão.</p>
@@ -86,7 +86,7 @@ export class Screens {
           <div class="eyebrow">Ficha técnica</div>
           <h2>Créditos</h2>
           <div class="sheet">
-            <p><b>${GAME_TITLE}</b> é um jogo original de atendimento no navegador. Nenhuma marca de mercado real, mascote emprestado ou IP de terceiros — só uma esquina inventada e uma fila impaciente.</p>
+            <p><b>${GAME_TITLE}</b> é um jogo original de atendimento no navegador. Nenhuma marca de mercado real, mascote emprestado ou IP de terceiros — só um mercadinho inventado e uma fila impaciente.</p>
             <p>Canvas 2D · TypeScript · Vite · áudio procedural (Web Audio). Feito para celular e computador.</p>
             <p>MIT · KT3746</p>
           </div>
@@ -142,7 +142,7 @@ export class Screens {
       <section class="screen solid">
         <div class="screen-body">
           <div class="eyebrow">${isBest ? "Novo recorde da esquina" : "Caixa fechado"}</div>
-          <h2>${score >= 2000 ? "Caos com classe" : score >= 800 ? "Quase deu conta" : "A fila venceu"}</h2>
+          <h2>${score >= 2000 ? "Mercado com classe" : score >= 800 ? "Quase deu conta" : "A fila venceu"}</h2>
           <div class="sheet stats">
             <p><b>Pontos:</b> ${score}</p>
             <p><b>Clientes atendidos:</b> ${served}</p>
