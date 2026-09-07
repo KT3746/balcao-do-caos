@@ -239,8 +239,8 @@ export function tryDeliver(run: Run, customerId: number, at?: { x: number; y: nu
     c.patience = Math.max(0.4, c.patience - c.patienceMax * 0.24);
     say(c, arch.wrong);
     run.holding = null;
-    run.shake = Math.max(run.shake, 7);
-    burst(run, at?.x ?? 0.5, at?.y ?? 0.28, "#c4491d", 8);
+    run.shake = Math.max(run.shake, 10);
+    burst(run, at?.x ?? 0.5, at?.y ?? 0.28, "#c4491d", 14);
     return { type: "wrong", name: arch.name };
   }
   c.order.shift();
@@ -262,7 +262,8 @@ export function tryDeliver(run: Run, customerId: number, at?: { x: number; y: nu
   } else {
     say(c, ["Ainda falta um.", "Isso. O próximo.", "Segue a lista."]);
   }
-  burst(run, at?.x ?? 0.5, at?.y ?? 0.28, c.special ? "#e3b23c" : "#2f6b4f", 12);
+  burst(run, at?.x ?? 0.5, at?.y ?? 0.28, c.special ? "#e3b23c" : "#4caf5a", 18);
+  if (run.combo >= 3) burst(run, at?.x ?? 0.5, (at?.y ?? 0.28) - 0.02, "#f6e27a", 8);
   if (run.hint && run.t > 1.2) {
     run.hint = "Isso. Mantém o ritmo.";
     run.hintT = 2.4;
@@ -272,16 +273,17 @@ export function tryDeliver(run: Run, customerId: number, at?: { x: number; y: nu
 
 function burst(run: Run, x: number, y: number, color: string, n: number): void {
   for (let i = 0; i < n; i++) {
+    const life = 0.5 + Math.random() * 0.4;
     run.particles.push({
       x,
       y,
-      vx: (Math.random() - 0.5) * 0.35,
-      vy: -0.18 - Math.random() * 0.28,
-      life: 0.45 + Math.random() * 0.35,
-      max: 0.8,
+      vx: (Math.random() - 0.5) * 0.48,
+      vy: -0.22 - Math.random() * 0.34,
+      life,
+      max: life,
       color,
-      size: 3 + Math.random() * 4,
-      kind: Math.random() < 0.3 ? "star" : "spark",
+      size: 3.5 + Math.random() * 5.5,
+      kind: Math.random() < 0.42 ? "star" : "spark",
     });
   }
 }

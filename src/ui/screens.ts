@@ -36,10 +36,11 @@ export class Screens {
 
   title(muted: boolean, best: number): void {
     this.set(`
-      <section class="screen">
+      <section class="screen title-screen">
         <div class="screen-body">
           <div class="topbar">
             <div class="brand">
+              <div class="eyebrow">Lojinha de esquina</div>
               <h1>${GAME_TITLE}</h1>
               <p class="lede">Clientes pedem. Você pega o produto certo. A paciência acaba primeiro — a não ser que você seja mais rápido.</p>
               ${best > 0 ? `<p class="best">Recorde local: <b>${best}</b></p>` : ""}
@@ -48,7 +49,7 @@ export class Screens {
           </div>
         </div>
         <div class="screen-foot col">
-          <button type="button" class="btn primary" data-act="play">Abrir a loja</button>
+          <button type="button" class="btn primary cta" data-act="play">Abrir a loja</button>
           <div class="row">
             <button type="button" class="btn ghost" data-act="how">Como jogar</button>
             <button type="button" class="btn ghost" data-act="credits">Créditos</button>
@@ -115,7 +116,7 @@ export class Screens {
             <p><b>3.</b> Três clientes furiosos encerram o expediente. O ritmo sobe depois.</p>
           </div>
           <div class="stack">
-            <button type="button" class="btn primary" data-act="begin">Entendi — abrir o caixa</button>
+            <button type="button" class="btn primary cta" data-act="begin">Entendi — abrir o caixa</button>
           </div>
         </div>
       </section>`);
@@ -124,12 +125,12 @@ export class Screens {
   pause(muted: boolean): void {
     this.set(`
       <section class="overlay">
-        <div class="panel">
+        <div class="panel premium-panel">
           <div class="eyebrow">Expediente interrompido</div>
           <h2>Pausa</h2>
           <p class="lede">A fila congelou. Você não.</p>
           <div class="stack">
-            <button type="button" class="btn primary" data-act="resume">Continuar</button>
+            <button type="button" class="btn primary cta" data-act="resume">Continuar</button>
             <button type="button" class="btn" data-act="mute">${muted ? "Ativar som" : "Mudo"}</button>
             <button type="button" class="btn danger" data-act="quit">Fechar a loja</button>
           </div>
@@ -139,7 +140,7 @@ export class Screens {
 
   over(score: number, served: number, turno: number, best: number, isBest: boolean): void {
     this.set(`
-      <section class="screen solid">
+      <section class="screen solid over-screen">
         <div class="screen-body">
           <div class="eyebrow">${isBest ? "Novo recorde da esquina" : "Caixa fechado"}</div>
           <h2>${score >= 2000 ? "Mercado com classe" : score >= 800 ? "Quase deu conta" : "A fila venceu"}</h2>
@@ -151,8 +152,8 @@ export class Screens {
           </div>
         </div>
         <div class="screen-foot col">
-          <button type="button" class="btn primary" data-act="retry">Outro expediente</button>
-          <button type="button" class="btn" data-act="menu">Menu</button>
+          <button type="button" class="btn primary cta" data-act="retry">Outro expediente</button>
+          <button type="button" class="btn ghost" data-act="menu">Menu</button>
         </div>
       </section>`);
   }
