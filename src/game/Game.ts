@@ -458,10 +458,14 @@ export class Game {
         this.popScore(ev.score, ev.combo, ev.customerId, at);
         break;
       }
-      case "wrong":
+      case "wrong": {
         this.audio.wrong();
-        this.toast(TOASTS.wrong[0]!, 1100);
+        const msg =
+          TOASTS.wrong[Math.floor(Math.random() * TOASTS.wrong.length)] ?? "Ops. Era o outro.";
+        this.toast(msg, 1500);
+        this.popWrong(msg, at);
         break;
+      }
       case "rage":
         this.audio.slam();
         this.toast(
@@ -565,6 +569,10 @@ export class Game {
       const box = this.hud.getBoundingClientRect().height;
       if (box > 40) this.hudBand = Math.ceil(box) + 8;
     }
+    document.documentElement.style.setProperty(
+      "--hud-band",
+      `${Math.max(72, this.hudBand || 96)}px`,
+    );
     this.ensureLayout(forceLayout);
   }
 
@@ -772,6 +780,18 @@ export class Game {
     }
     floatText(this.run, x, y, `+${score}`, "#e3b23c");
     if (combo >= 2) floatText(this.run, x, y - 0.045, `Combo ×${combo}`, "#7dff9a");
+  }
+
+  /** Feedback visível no canvas (arraste no celular às vezes esconde o toast DOM). */
+  private popWrong(msg: string, at?: { x: number; y: number }): void {
+    if (!this.run) return;
+    let x = 0.5;
+    let y = 0.26;
+    if (at) {
+      x = at.x / Math.max(1, this.cssW);
+      y = Math.max(0.12, at.y / Math.max(1, this.cssH) - 0.06);
+    }
+    floatText(this.run, x, y, msg, "#ffb4a2");
   }
 
   private syncBanner(): void {

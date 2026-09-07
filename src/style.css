@@ -281,14 +281,16 @@ body.play-guard #btn-pause,
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 9;
+  /* Acima do canvas em play-guard (z-index 8) e do HUD (6). */
+  z-index: 16;
   pointer-events: none;
   text-align: center;
-  max-width: min(78vw, 340px);
+  max-width: min(92vw, 340px);
 }
 
 .toast-stack {
-  top: calc(var(--safe-t) + 112px);
+  /* Abaixo da faixa do banner, sem cobrir a fila do meio da tela. */
+  top: calc(var(--safe-t) + var(--hud-band, 112px) + 52px);
   bottom: auto;
   display: flex;
   flex-direction: column;
@@ -308,14 +310,22 @@ body.play-guard #btn-pause,
 }
 
 #banner {
-  top: 38%;
+  /* Antes ficava em 38% e tapava a fila no celular. */
+  top: calc(var(--safe-t) + var(--hud-band, 112px) + 6px);
   font-family: var(--font-display);
-  font-size: 20px;
-  border-radius: 16px;
-  padding: 12px 18px;
-  background: rgba(42, 29, 18, 0.9);
+  font-size: clamp(15px, 4.2vw, 20px);
+  line-height: 1.25;
+  border-radius: 14px;
+  padding: 10px 14px;
+  background: rgba(42, 29, 18, 0.92);
   color: var(--cream);
   border: 2px solid rgba(227, 178, 60, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+body.play-guard #toasts,
+body.play-guard #banner {
+  z-index: 16;
 }
 
 .screen {
@@ -504,8 +514,12 @@ h2 {
     justify-self: stretch;
   }
   .toast-stack {
-    top: calc(var(--safe-t) + 168px);
-    max-width: min(72vw, 280px);
+    top: calc(var(--safe-t) + var(--hud-band, 168px) + 52px);
+    max-width: min(88vw, 300px);
+  }
+  #banner {
+    top: calc(var(--safe-t) + var(--hud-band, 168px) + 6px);
+    max-width: min(92vw, 300px);
   }
 }
 
