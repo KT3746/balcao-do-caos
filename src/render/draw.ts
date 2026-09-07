@@ -36,12 +36,10 @@ export function drawShop(
   paintFloor(ctx, layout);
   paintQueueZone(ctx, layout);
   for (const c of run.customers) drawCustomer(ctx, c, layout, t);
-  paintCounter(ctx, layout, t);
-  drawClerk(ctx, layout, run, t);
   paintShelves(ctx, layout, run, t);
   if (run.chaos?.kind === "gato") drawCat(ctx, layout, run, t);
   drawParticles(ctx, run.particles, layout);
-  if (ghost) drawProduct(ctx, ghost.id, ghost.x, ghost.y, Math.min(56, layout.w * 0.08), t, true);
+  if (ghost) drawProduct(ctx, ghost.id, ghost.x, ghost.y, Math.min(72, layout.w * 0.12), t, true);
   if (run.chaos?.kind === "apagao") {
     ctx.fillStyle = "rgba(12, 8, 6, 0.46)";
     ctx.fillRect(0, 0, w, h);
@@ -68,7 +66,7 @@ export function drawShop(
   ctx.restore();
 }
 
-function paintWall(ctx: CanvasRenderingContext2D, w: number, h: number, layout: PlayLayout, t: number): void {
+function paintWall(ctx: CanvasRenderingContext2D, w: number, h: number, layout: PlayLayout, _t: number): void {
   const g = ctx.createLinearGradient(0, 0, 0, h);
   g.addColorStop(0, "#1c1612");
   g.addColorStop(0.45, "#15110e");
@@ -77,33 +75,12 @@ function paintWall(ctx: CanvasRenderingContext2D, w: number, h: number, layout: 
   ctx.fillRect(0, 0, w, h);
   ctx.fillStyle = "#12100e";
   ctx.fillRect(0, 0, w, layout.hud.h + 6);
-  // neon ABERTO
-  const nx = w - 86;
-  const ny = layout.hud.h + (layout.landscape ? 18 : 8);
-  ctx.save();
-  ctx.shadowColor = "rgba(80, 220, 120, 0.8)";
-  ctx.shadowBlur = 12 + Math.sin(t * 6) * 2;
-  ctx.fillStyle = "#1a3d24";
-  roundRect(ctx, nx, ny, 72, 26, 4);
-  ctx.fill();
-  ctx.fillStyle = "#7dff9a";
-  ctx.font = "800 12px Nunito, sans-serif";
-  ctx.fillText("ABERTO", nx + 36, ny + 18);
-  ctx.restore();
 }
 
 function paintFloor(ctx: CanvasRenderingContext2D, layout: PlayLayout): void {
-  const y0 = layout.queue.y;
-  const tile = 28;
-  for (let y = y0; y < layout.h; y += tile) {
-    for (let x = 0; x < layout.w; x += tile) {
-      const on = ((x / tile) | 0) % 2 === ((y / tile) | 0) % 2;
-      ctx.fillStyle = on ? "#1a1612" : "#14110e";
-      ctx.fillRect(x, y, tile, tile);
-    }
-  }
-  ctx.fillStyle = "rgba(42, 29, 18, 0.12)";
-  ctx.fillRect(0, layout.counter.y - 8, layout.w, layout.h);
+  // Fundo liso escuro — sem xadrez que polui a tela pequena.
+  ctx.fillStyle = "#12100e";
+  ctx.fillRect(0, layout.queue.y, layout.w, layout.h - layout.queue.y);
 }
 
 function paintQueueZone(ctx: CanvasRenderingContext2D, layout: PlayLayout): void {
@@ -112,25 +89,6 @@ function paintQueueZone(ctx: CanvasRenderingContext2D, layout: PlayLayout): void
   ctx.fill();
 }
 
-function paintCounter(ctx: CanvasRenderingContext2D, layout: PlayLayout, t: number): void {
-  const r = layout.counter;
-  ctx.fillStyle = "#2a1c14";
-  roundRect(ctx, r.x, r.y, r.w, r.h, 10);
-  ctx.fill();
-  ctx.fillStyle = "#3a2818";
-  if (layout.landscape) {
-    ctx.fillRect(r.x + 8, r.y + 10, 14, r.h - 20);
-  } else {
-    ctx.fillRect(r.x + 10, r.y + 8, r.w - 20, 16);
-  }
-  ctx.strokeStyle = "rgba(227, 178, 60, 0.22)";
-  ctx.lineWidth = 2;
-  roundRect(ctx, r.x + 4, r.y + 4, r.w - 8, r.h - 8, 8);
-  ctx.stroke();
-  const gleam = 0.15 + Math.sin(t * 2) * 0.05;
-  ctx.fillStyle = `rgba(227, 178, 60, ${gleam * 0.45})`;
-  if (!layout.landscape) ctx.fillRect(r.x + 18, r.y + 10, r.w * 0.3, 6);
-}
 
 function paintShelves(ctx: CanvasRenderingContext2D, layout: PlayLayout, run: Run, t: number): void {
   const s = layout.shelves;
@@ -144,32 +102,36 @@ function paintShelves(ctx: CanvasRenderingContext2D, layout: PlayLayout, run: Ru
   const showKeys = !wantsTouchCopy();
   cells.forEach((cell, i) => {
     const blocked = catBlocks(run, layout, cell.rect);
-    ctx.fillStyle = blocked ? "rgba(8, 8, 8, 0.55)" : "rgba(36, 30, 24, 0.95)";
-    roundRect(ctx, cell.rect.x, cell.rect.y, cell.rect.w, cell.rect.h, 10);
+    ctx.fillStyle = blocked ? "rgba(8, 8, 8, 0.55)" : "rgba(42, 34, 26, 0.98)";
+    roundRect(ctx, cell.rect.x, cell.rect.y, cell.rect.w, cell.rect.h, 12);
     ctx.fill();
-    ctx.strokeStyle = "rgba(227, 178, 60, 0.18)";
-    ctx.lineWidth = 1.5;
-    roundRect(ctx, cell.rect.x, cell.rect.y, cell.rect.w, cell.rect.h, 10);
+    ctx.strokeStyle = "rgba(227, 178, 60, 0.28)";
+    ctx.lineWidth = 2;
+    roundRect(ctx, cell.rect.x, cell.rect.y, cell.rect.w, cell.rect.h, 12);
     ctx.stroke();
     if (run.holding === cell.id) {
       ctx.strokeStyle = "#e3b23c";
-      ctx.lineWidth = 3;
-      roundRect(ctx, cell.rect.x, cell.rect.y, cell.rect.w, cell.rect.h, 10);
+      ctx.lineWidth = 3.5;
+      roundRect(ctx, cell.rect.x + 1, cell.rect.y + 1, cell.rect.w - 2, cell.rect.h - 2, 11);
       ctx.stroke();
     }
     const cx = cell.rect.x + cell.rect.w / 2;
-    const cy = cell.rect.y + cell.rect.h * 0.42;
-    const size = Math.min(cell.rect.w, cell.rect.h) * 0.42;
-    drawProduct(ctx, cell.id, cx, cy, size, t, false);
+    const cy = cell.rect.y + cell.rect.h * 0.38;
+    const size = Math.min(cell.rect.w, cell.rect.h) * 0.58;
+    drawProduct(ctx, cell.id, cx, cy, size, t, run.holding === cell.id);
     const p = PRODUCT_BY_ID[cell.id];
-    ctx.fillStyle = "#e8dcc8";
-    ctx.font = `800 ${Math.max(10, Math.min(13, cell.rect.w * 0.16))}px Nunito, sans-serif`;
+    const labelSize = Math.max(12, Math.min(16, cell.rect.w * 0.2));
+    ctx.font = `800 ${labelSize}px Nunito, sans-serif`;
     ctx.textAlign = "center";
-    ctx.fillText(p.short, cx, cell.rect.y + cell.rect.h - 10, cell.rect.w - 8);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "rgba(10,8,6,0.85)";
+    ctx.strokeText(p.short, cx, cell.rect.y + cell.rect.h - 8, cell.rect.w - 6);
+    ctx.fillStyle = "#f7ecd4";
+    ctx.fillText(p.short, cx, cell.rect.y + cell.rect.h - 8, cell.rect.w - 6);
     const key = showKeys ? shelfKeyLabel(i) : null;
     if (key) {
-      ctx.fillStyle = "rgba(232,220,200,0.45)";
-      ctx.font = "800 10px Nunito, sans-serif";
+      ctx.fillStyle = "rgba(232,220,200,0.55)";
+      ctx.font = "800 11px Nunito, sans-serif";
       ctx.textAlign = "left";
       ctx.fillText(key, cell.rect.x + 6, cell.rect.y + 14);
     }
@@ -221,44 +183,6 @@ function drawCat(ctx: CanvasRenderingContext2D, layout: PlayLayout, run: Run, t:
   ctx.restore();
 }
 
-function drawClerk(ctx: CanvasRenderingContext2D, layout: PlayLayout, run: Run, t: number): void {
-  const x = layout.clerk.x + Math.sin(t * 2) * 2;
-  const y = layout.clerk.y;
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.fillStyle = "rgba(0,0,0,0.18)";
-  ctx.beginPath();
-  ctx.ellipse(0, 28, 16, 6, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "#3b4a6b";
-  roundRect(ctx, -14, 2, 28, 24, 6);
-  ctx.fill();
-  ctx.fillStyle = "#2f6b4f";
-  roundRect(ctx, -16, 0, 32, 16, 4);
-  ctx.fill();
-  ctx.fillStyle = "#f0c9a8";
-  ctx.beginPath();
-  ctx.arc(0, -10, 12, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "#2a1d12";
-  ctx.beginPath();
-  ctx.arc(0, -16, 10, Math.PI, 0);
-  ctx.fill();
-  ctx.fillStyle = "#2a1d12";
-  ctx.beginPath();
-  ctx.arc(-4, -10, 1.6, 0, Math.PI * 2);
-  ctx.arc(4, -10, 1.6, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = "#2a1d12";
-  ctx.lineWidth = 1.4;
-  ctx.beginPath();
-  ctx.arc(0, -6, 4, 0.15, Math.PI - 0.15);
-  ctx.stroke();
-  if (run.holding) {
-    drawProduct(ctx, run.holding, 18, -4, 22, t, true);
-  }
-  ctx.restore();
-}
 
 function drawCustomer(ctx: CanvasRenderingContext2D, c: Customer, layout: PlayLayout, t: number): void {
   const slot = layout.slots[c.slot];
@@ -324,7 +248,7 @@ function drawCustomer(ctx: CanvasRenderingContext2D, c: Customer, layout: PlayLa
   roundRect(ctx, barX + 1, barY + 1, Math.max(6, (barW - 2) * ratio), barH - 2, 5);
   ctx.fill();
 
-  ctx.fillStyle = "#2a1d12";
+  ctx.fillStyle = "#e8dcc8";
   ctx.font = "800 12px Nunito, sans-serif";
   ctx.textAlign = "center";
   ctx.fillText(c.special ? `${arch.name} ★` : arch.name, slot.x + slot.w / 2 + ox, barY + 26, slot.w - 8);
@@ -333,23 +257,24 @@ function drawCustomer(ctx: CanvasRenderingContext2D, c: Customer, layout: PlayLa
   const bubbleH = Math.min(88, Math.max(58, slot.h * 0.4));
   const bx = slot.x + 4 + ox;
   const by = slot.y + 32 + oy;
-  ctx.fillStyle = c.mood === "rage" ? "#f3d0c6" : "#fff8ea";
+  ctx.fillStyle = c.mood === "rage" ? "#3a241c" : "#2a2218";
   roundRect(ctx, bx, by, bubbleW, bubbleH, 10);
   ctx.fill();
-  ctx.strokeStyle = "rgba(42,29,18,0.2)";
+  ctx.strokeStyle = "rgba(227,178,60,0.35)";
+  ctx.lineWidth = 2;
   ctx.stroke();
   const need = c.order;
-  const icon = Math.min(34, (bubbleW - 10) / Math.max(1, need.length) - 6);
+  const icon = Math.min(44, (bubbleW - 8) / Math.max(1, need.length) - 4);
   need.forEach((id, i) => {
-    const ix = bx + bubbleW / 2 + (i - (need.length - 1) / 2) * (icon + 12);
-    drawProduct(ctx, id, ix, by + bubbleH * 0.38, icon * 0.78, t, false);
-    ctx.fillStyle = "#2a1d12";
-    ctx.font = `800 ${Math.max(9, Math.min(12, bubbleW * 0.12))}px Nunito, sans-serif`;
+    const ix = bx + bubbleW / 2 + (i - (need.length - 1) / 2) * (icon + 10);
+    drawProduct(ctx, id, ix, by + bubbleH * 0.36, icon * 0.92, t, false);
+    ctx.fillStyle = "#f7ecd4";
+    ctx.font = `800 ${Math.max(10, Math.min(13, bubbleW * 0.14))}px Nunito, sans-serif`;
     ctx.textAlign = "center";
-    ctx.fillText(PRODUCT_BY_ID[id].short, ix, by + bubbleH - 8, icon + 10);
+    ctx.fillText(PRODUCT_BY_ID[id].short, ix, by + bubbleH - 7, icon + 12);
   });
   if (need.length === 0) {
-    ctx.fillStyle = "#2f6b4f";
+    ctx.fillStyle = "#7dff9a";
     ctx.font = "800 12px Nunito, sans-serif";
     ctx.fillText("Obrigado!", bx + bubbleW / 2, by + bubbleH * 0.6);
   }
