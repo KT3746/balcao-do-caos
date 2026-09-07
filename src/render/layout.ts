@@ -13,6 +13,7 @@ export type PlayLayout = {
   hud: Rect;
   queue: Rect;
   slots: Rect[];
+  /** Mantido por compat; balcão visual removido. */
   counter: Rect;
   clerk: { x: number; y: number };
   hand: Rect;
@@ -46,27 +47,26 @@ export function measureHudHeight(landscape: boolean): number {
 
 export function computeLayout(w: number, h: number, turno: number, slotCount: number, hudBand?: number): PlayLayout {
   const landscape = w > h * 1.12 && h < 620;
-  const safeT = 8;
+  const safeT = 6;
   const hudH = hudBand && hudBand > 40 ? hudBand : measureHudHeight(landscape);
   const hud: Rect = { x: 0, y: 0, w, h: hudH };
   const maxSlots = Math.max(1, slotCount);
+  const stubCounter: Rect = { x: 0, y: 0, w: 0, h: 0 };
 
   if (landscape) {
-    const queue: Rect = { x: 10, y: hudH + 8, w: Math.min(280, w * 0.32), h: h - hudH - 18 };
-    const shelves: Rect = { x: w * 0.46, y: hudH + 10, w: w * 0.52, h: h - hudH - 20 };
-    const counter: Rect = { x: queue.x + queue.w + 6, y: hudH + 18, w: Math.max(70, w * 0.12), h: h - hudH - 36 };
+    const queue: Rect = { x: 8, y: hudH + 6, w: Math.min(260, w * 0.3), h: h - hudH - 14 };
+    const shelves: Rect = { x: queue.x + queue.w + 10, y: hudH + 8, w: w - (queue.x + queue.w + 18), h: h - hudH - 16 };
     const slots: Rect[] = [];
-    const inner = queue.h - 16;
-    const sh = Math.min(150, inner / maxSlots - 8);
+    const inner = queue.h - 12;
+    const sh = Math.min(150, inner / maxSlots - 6);
     for (let i = 0; i < maxSlots; i++) {
       slots.push({
-        x: queue.x + 10,
-        y: queue.y + 10 + i * (sh + 8),
-        w: queue.w - 20,
+        x: queue.x + 8,
+        y: queue.y + 8 + i * (sh + 6),
+        w: queue.w - 16,
         h: sh,
       });
     }
-    const cells = gridCells(shelves, turno, landscape);
     return {
       w,
       h,
@@ -74,33 +74,33 @@ export function computeLayout(w: number, h: number, turno: number, slotCount: nu
       hud,
       queue,
       slots,
-      counter,
-      clerk: { x: counter.x + counter.w * 0.5, y: counter.y + counter.h * 0.62 },
-      hand: { x: counter.x + 8, y: counter.y + 12, w: counter.w - 16, h: 64 },
+      counter: stubCounter,
+      clerk: { x: shelves.x, y: shelves.y },
+      hand: { x: shelves.x, y: shelves.y, w: 1, h: 1 },
       shelves,
-      cells,
+      cells: gridCells(shelves, turno, landscape),
       catY: shelves.y + shelves.h * 0.55,
     };
   }
 
-  const queueH = Math.min(236, h * 0.3);
-  const queue: Rect = { x: 10, y: hudH + safeT, w: w - 20, h: queueH };
-  const counterH = Math.max(70, Math.min(92, h * 0.11));
-  const counter: Rect = { x: 18, y: queue.y + queue.h + 6, w: w - 36, h: counterH };
+  // Retrato / celular: fila compacta no topo, prateleira ocupa o resto (sem balcão).
+  const queueH = Math.min(168, Math.max(110, h * 0.22));
+  const queue: Rect = { x: 8, y: hudH + safeT, w: w - 16, h: queueH };
+  const gap = 8;
   const shelves: Rect = {
-    x: 12,
-    y: counter.y + counter.h + 8,
-    w: w - 24,
-    h: Math.max(160, h - (counter.y + counter.h + 16)),
+    x: 8,
+    y: queue.y + queue.h + gap,
+    w: w - 16,
+    h: Math.max(200, h - (queue.y + queue.h + gap + 10)),
   };
   const slots: Rect[] = [];
-  const sw = (queue.w - 12) / maxSlots;
+  const sw = (queue.w - 8) / maxSlots;
   for (let i = 0; i < maxSlots; i++) {
     slots.push({
-      x: queue.x + 6 + i * sw,
-      y: queue.y + 8,
-      w: sw - 8,
-      h: queue.h - 16,
+      x: queue.x + 4 + i * sw,
+      y: queue.y + 6,
+      w: sw - 6,
+      h: queue.h - 12,
     });
   }
   return {
@@ -110,9 +110,9 @@ export function computeLayout(w: number, h: number, turno: number, slotCount: nu
     hud,
     queue,
     slots,
-    counter,
-    clerk: { x: counter.x + counter.w * 0.5, y: counter.y + counter.h * 0.35 },
-    hand: { x: counter.x + counter.w * 0.62, y: counter.y + 8, w: 72, h: 56 },
+    counter: stubCounter,
+    clerk: { x: w * 0.5, y: queue.y + queue.h },
+    hand: { x: 0, y: 0, w: 1, h: 1 },
     shelves,
     cells: gridCells(shelves, turno, false),
     catY: shelves.y + 28,
@@ -122,9 +122,9 @@ export function computeLayout(w: number, h: number, turno: number, slotCount: nu
 function gridCells(shelves: Rect, turno: number, landscape: boolean): ShelfCell[] {
   const ids = productsUnlocked(turno).map((p) => p.id);
   const n = ids.length;
-  const cols = landscape ? (n > 12 ? 8 : 6) : n > 12 ? 4 : 4;
+  const cols = landscape ? (n > 12 ? 8 : 6) : n > 8 ? 4 : Math.min(4, Math.max(2, n));
   const rows = Math.ceil(n / cols);
-  const gap = 8;
+  const gap = landscape ? 8 : 6;
   const cw = (shelves.w - gap * (cols + 1)) / cols;
   const ch = (shelves.h - gap * (rows + 1)) / rows;
   const cells: ShelfCell[] = [];
