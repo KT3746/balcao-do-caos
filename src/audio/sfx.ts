@@ -1,8 +1,6 @@
 export class Sfx {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
-  private hum: GainNode | null = null;
-  private murmur: GainNode | null = null;
   muted = false;
   unlocked = false;
 
@@ -20,41 +18,7 @@ export class Sfx {
     this.master = this.ctx.createGain();
     this.master.gain.value = this.muted ? 0 : 0.28;
     this.master.connect(this.ctx.destination);
-
-    this.hum = this.ctx.createGain();
-    this.hum.gain.value = 0.035;
-    const humOsc = this.ctx.createOscillator();
-    humOsc.type = "sine";
-    humOsc.frequency.value = 87;
-    const hum2 = this.ctx.createOscillator();
-    hum2.type = "triangle";
-    hum2.frequency.value = 174;
-    const humF = this.ctx.createBiquadFilter();
-    humF.type = "lowpass";
-    humF.frequency.value = 240;
-    humOsc.connect(humF);
-    hum2.connect(humF);
-    humF.connect(this.hum);
-    this.hum.connect(this.master);
-    humOsc.start();
-    hum2.start();
-
-    const buffer = this.ctx.createBuffer(1, this.ctx.sampleRate * 2, this.ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.4;
-    const noise = this.ctx.createBufferSource();
-    noise.buffer = buffer;
-    noise.loop = true;
-    const nf = this.ctx.createBiquadFilter();
-    nf.type = "bandpass";
-    nf.frequency.value = 780;
-    nf.Q.value = 0.7;
-    this.murmur = this.ctx.createGain();
-    this.murmur.gain.value = 0.03;
-    noise.connect(nf);
-    nf.connect(this.murmur);
-    this.murmur.connect(this.master);
-    noise.start();
+    // Sem zumbido/ambiente contínuo — só efeitos curtos nas ações.
   }
 
   setMuted(muted: boolean): void {
