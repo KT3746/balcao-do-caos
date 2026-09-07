@@ -114,7 +114,7 @@ export function createRun(): Run {
     banner: null,
     bannerT: 0,
     first: true,
-    chaosIn: 22,
+    chaosIn: 36,
     catX: 0.15,
     catVx: 0.22,
     shake: 0,
@@ -127,29 +127,33 @@ export function createRun(): Run {
 
 export function maxSlotsFor(turno: number): number {
   if (turno <= 1) return 1;
-  return clamp(1 + turno, 2, MAX_SLOTS);
+  if (turno === 2) return 2;
+  if (turno === 3) return 2;
+  return clamp(turno - 1, 3, Math.min(3, MAX_SLOTS));
 }
 
 export function spawnInterval(turno: number): number {
-  if (turno <= 1) return 9.2 + Math.random() * 1.1;
-  return Math.max(1.7, 5.15 - turno * 0.62) + Math.random() * 0.5;
+  if (turno <= 1) return 10.5 + Math.random() * 1.4;
+  if (turno === 2) return 7.2 + Math.random() * 1.2;
+  if (turno === 3) return 5.8 + Math.random() * 1.0;
+  return Math.max(3.2, 5.4 - (turno - 3) * 0.35) + Math.random() * 0.7;
 }
 
 export function patienceFor(turno: number, items: number, special: boolean): number {
-  const base = turno <= 1 ? 44 : Math.max(8, 18.2 - turno * 2.15);
-  const extra = (items - 1) * 3.1;
-  return (base + extra) * (special ? 0.72 : 1);
+  const base = turno <= 1 ? 52 : turno === 2 ? 34 : Math.max(16, 28 - turno * 1.4);
+  const extra = (items - 1) * 5.2;
+  return (base + extra) * (special ? 0.88 : 1);
 }
 
 function orderFor(run: Run): { items: ProductId[]; special: boolean } {
   const pool = productsUnlocked(run.turno).map((p) => p.id);
   let n = 1;
   if (run.first) return { items: [pick(easyFirst.filter((id) => pool.includes(id)))], special: false };
-  if (run.turno >= 2 && Math.random() < 0.38) n = 2;
-  if (run.turno >= 3 && Math.random() < 0.24) n = 3;
-  if (run.turno >= 4 && Math.random() < 0.34) n = 2 + randInt(2);
+  if (run.turno >= 3 && Math.random() < 0.28) n = 2;
+  if (run.turno >= 4 && Math.random() < 0.18) n = 3;
+  if (run.turno >= 5 && Math.random() < 0.22) n = 2 + randInt(2);
   n = Math.min(n, 3, pool.length);
-  const special = run.turno >= 3 && n >= 2 && Math.random() < 0.18;
+  const special = run.turno >= 4 && n >= 2 && Math.random() < 0.14;
   const items: ProductId[] = [];
   const bag = shuffleInPlace(pool.slice());
   for (let i = 0; i < n; i++) {
@@ -236,7 +240,7 @@ export function tryDeliver(run: Run, customerId: number, at?: { x: number; y: nu
     run.wrong++;
     run.combo = 0;
     run.comboT = 0;
-    c.patience = Math.max(0.4, c.patience - c.patienceMax * 0.24);
+    c.patience = Math.max(0.4, c.patience - c.patienceMax * 0.14);
     say(c, arch.wrong);
     run.holding = null;
     run.shake = Math.max(run.shake, 10);
@@ -313,7 +317,7 @@ function startChaos(run: Run, kind: ChaosKind): void {
     spawnCustomer(run);
     spawnCustomer(run);
   }
-  run.chaosIn = 16 + Math.random() * 10;
+  run.chaosIn = 28 + Math.random() * 14;
 }
 
 function endChaos(run: Run): void {
@@ -331,7 +335,7 @@ function maybeShift(run: Run): SimEvent | null {
   run.shelfOrder = productsUnlocked(run.turno).map((p) => p.id);
   run.banner = SHIFT_LINES[Math.min(SHIFT_LINES.length - 1, run.turno - 1)] ?? `Turno ${run.turno}`;
   run.bannerT = 2.4;
-  run.spawnIn = Math.min(run.spawnIn, 1.1);
+  run.spawnIn = Math.min(run.spawnIn, 2.8);
   return { type: "shift", turno: run.turno };
 }
 
@@ -377,10 +381,10 @@ export function tick(run: Run, dt: number): SimEvent[] {
       if (run.catX > 0.88 || run.catX < 0.1) run.catVx *= -1;
     }
     if (run.chaos.t <= 0) endChaos(run);
-  } else if (run.turno >= 2) {
+  } else if (run.turno >= 3) {
     run.chaosIn -= simDt;
     if (run.chaosIn <= 0) {
-      const kinds: ChaosKind[] = run.turno >= 3 ? ["apagao", "liquidacao", "gato", "rush"] : ["liquidacao", "gato"];
+      const kinds: ChaosKind[] = run.turno >= 4 ? ["apagao", "liquidacao", "gato", "rush"] : ["liquidacao", "gato"];
       const kind = pick(kinds);
       startChaos(run, kind);
       events.push({ type: "chaos", kind });
@@ -404,7 +408,7 @@ export function tick(run: Run, dt: number): SimEvent[] {
       c.anim = Math.min(1, c.anim + dt * 2.4);
       if (c.anim >= 1) c.mood = "wait";
     } else if (c.mood === "wait") {
-      const drain = run.turno <= 1 ? simDt * 0.38 : simDt;
+      const drain = run.turno <= 1 ? simDt * 0.32 : run.turno === 2 ? simDt * 0.72 : simDt * 0.88;
       c.patience -= drain;
       if (c.patience / c.patienceMax < 0.34 && c.phraseT <= 0) {
         const arch = ARCHETYPES.find((a) => a.id === c.arch);
@@ -421,7 +425,7 @@ export function tick(run: Run, dt: number): SimEvent[] {
         events.push({ type: "rage", name: arch.name });
         if (run.lives <= 0) {
           run.over = true;
-          run.banner = "Três clientes foram embora furiosos.";
+          run.banner = "Quatro clientes foram embora furiosos.";
           run.bannerT = 1.2;
           events.push({ type: "over" });
         }
