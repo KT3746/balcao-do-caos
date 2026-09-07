@@ -518,20 +518,20 @@ export class Game {
   private paintMenuBg(w: number, h: number): void {
     const ctx = this.ctx;
     const g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, "#d9b07a");
-    g.addColorStop(1, "#7a4a28");
+    g.addColorStop(0, "#1a1410");
+    g.addColorStop(1, "#0e0a08");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
     const tile = 36;
-    ctx.globalAlpha = 0.18;
+    ctx.globalAlpha = 0.12;
     for (let y = h * 0.45; y < h; y += tile) {
       for (let x = 0; x < w; x += tile) {
-        ctx.fillStyle = ((x / tile) | 0) % 2 === ((y / tile) | 0) % 2 ? "#f7ecd4" : "#c4491d";
+        ctx.fillStyle = ((x / tile) | 0) % 2 === ((y / tile) | 0) % 2 ? "#2a2218" : "#3a2418";
         ctx.fillRect(x, y, tile, tile);
       }
     }
     ctx.globalAlpha = 1;
-    ctx.fillStyle = "#5c3318";
+    ctx.fillStyle = "#241810";
     ctx.fillRect(0, h * 0.58, w, 28);
     const ids = productsUnlocked(3).map((p) => p.id);
     const t = performance.now() / 1000;
@@ -720,6 +720,11 @@ export class Game {
     document.body.classList.toggle("is-play", playing && !this.run?.tutorial);
     document.body.dataset.view = this.view;
     this.hud.hidden = !showHud;
+    if (showHud) {
+      const hand = document.getElementById("hud-hand");
+      if (hand) hand.hidden = false;
+      this.remeasureHud(true);
+    }
     if (!playing) {
       this.bannerEl.hidden = true;
       this.toastEl.hidden = true;
@@ -753,15 +758,9 @@ export class Game {
     const hand = document.getElementById("hud-hand");
     const handName = document.getElementById("hud-hand-name");
     if (hand && handName) {
-      const wasHidden = hand.hidden;
-      if (this.run.holding) {
-        hand.hidden = false;
-        handName.textContent = PRODUCT_BY_ID[this.run.holding].short;
-      } else {
-        hand.hidden = true;
-        handName.textContent = "—";
-      }
-      if (wasHidden !== hand.hidden) this.remeasureHud(true);
+      // Mantém o painel sempre visível p/ a prateleira não encolher ao pegar item.
+      hand.hidden = false;
+      handName.textContent = this.run.holding ? PRODUCT_BY_ID[this.run.holding].short : "—";
     }
   }
 

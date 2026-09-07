@@ -70,12 +70,12 @@ export function drawShop(
 
 function paintWall(ctx: CanvasRenderingContext2D, w: number, h: number, layout: PlayLayout, t: number): void {
   const g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0, "#d9b07a");
-  g.addColorStop(0.45, "#c9965c");
-  g.addColorStop(1, "#8a5a32");
+  g.addColorStop(0, "#1c1612");
+  g.addColorStop(0.45, "#15110e");
+  g.addColorStop(1, "#0c0a08");
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = "#b07a44";
+  ctx.fillStyle = "#12100e";
   ctx.fillRect(0, 0, w, layout.hud.h + 6);
   // neon ABERTO
   const nx = w - 86;
@@ -98,7 +98,7 @@ function paintFloor(ctx: CanvasRenderingContext2D, layout: PlayLayout): void {
   for (let y = y0; y < layout.h; y += tile) {
     for (let x = 0; x < layout.w; x += tile) {
       const on = ((x / tile) | 0) % 2 === ((y / tile) | 0) % 2;
-      ctx.fillStyle = on ? "#e8d2a8" : "#dcc39a";
+      ctx.fillStyle = on ? "#1a1612" : "#14110e";
       ctx.fillRect(x, y, tile, tile);
     }
   }
@@ -107,46 +107,50 @@ function paintFloor(ctx: CanvasRenderingContext2D, layout: PlayLayout): void {
 }
 
 function paintQueueZone(ctx: CanvasRenderingContext2D, layout: PlayLayout): void {
-  ctx.fillStyle = "rgba(90, 50, 24, 0.18)";
+  ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
   roundRect(ctx, layout.queue.x, layout.queue.y, layout.queue.w, layout.queue.h, 18);
   ctx.fill();
 }
 
 function paintCounter(ctx: CanvasRenderingContext2D, layout: PlayLayout, t: number): void {
   const r = layout.counter;
-  ctx.fillStyle = "#5c3318";
+  ctx.fillStyle = "#2a1c14";
   roundRect(ctx, r.x, r.y, r.w, r.h, 10);
   ctx.fill();
-  ctx.fillStyle = "#8a5230";
+  ctx.fillStyle = "#3a2818";
   if (layout.landscape) {
     ctx.fillRect(r.x + 8, r.y + 10, 14, r.h - 20);
   } else {
     ctx.fillRect(r.x + 10, r.y + 8, r.w - 20, 16);
   }
-  ctx.strokeStyle = "rgba(250, 220, 170, 0.25)";
+  ctx.strokeStyle = "rgba(227, 178, 60, 0.22)";
   ctx.lineWidth = 2;
   roundRect(ctx, r.x + 4, r.y + 4, r.w - 8, r.h - 8, 8);
   ctx.stroke();
   const gleam = 0.15 + Math.sin(t * 2) * 0.05;
-  ctx.fillStyle = `rgba(255, 230, 180, ${gleam})`;
+  ctx.fillStyle = `rgba(227, 178, 60, ${gleam * 0.45})`;
   if (!layout.landscape) ctx.fillRect(r.x + 18, r.y + 10, r.w * 0.3, 6);
 }
 
 function paintShelves(ctx: CanvasRenderingContext2D, layout: PlayLayout, run: Run, t: number): void {
   const s = layout.shelves;
-  ctx.fillStyle = "#3d2a18";
+  ctx.fillStyle = "#1a1410";
   roundRect(ctx, s.x - 6, s.y - 6, s.w + 12, s.h + 12, 14);
   ctx.fill();
-  ctx.fillStyle = "#2f6b4f";
+  ctx.fillStyle = "#1e2e24";
   roundRect(ctx, s.x, s.y, s.w, s.h, 12);
   ctx.fill();
   const cells = applyShelfOrder(layout.cells, run.shelfOrder.length === layout.cells.length ? run.shelfOrder : layout.cells.map((c) => c.id));
   const showKeys = !wantsTouchCopy();
   cells.forEach((cell, i) => {
     const blocked = catBlocks(run, layout, cell.rect);
-    ctx.fillStyle = blocked ? "rgba(20, 20, 20, 0.35)" : "rgba(247, 236, 212, 0.92)";
+    ctx.fillStyle = blocked ? "rgba(8, 8, 8, 0.55)" : "rgba(36, 30, 24, 0.95)";
     roundRect(ctx, cell.rect.x, cell.rect.y, cell.rect.w, cell.rect.h, 10);
     ctx.fill();
+    ctx.strokeStyle = "rgba(227, 178, 60, 0.18)";
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, cell.rect.x, cell.rect.y, cell.rect.w, cell.rect.h, 10);
+    ctx.stroke();
     if (run.holding === cell.id) {
       ctx.strokeStyle = "#e3b23c";
       ctx.lineWidth = 3;
@@ -158,13 +162,13 @@ function paintShelves(ctx: CanvasRenderingContext2D, layout: PlayLayout, run: Ru
     const size = Math.min(cell.rect.w, cell.rect.h) * 0.42;
     drawProduct(ctx, cell.id, cx, cy, size, t, false);
     const p = PRODUCT_BY_ID[cell.id];
-    ctx.fillStyle = "#2a1d12";
+    ctx.fillStyle = "#e8dcc8";
     ctx.font = `800 ${Math.max(10, Math.min(13, cell.rect.w * 0.16))}px Nunito, sans-serif`;
     ctx.textAlign = "center";
     ctx.fillText(p.short, cx, cell.rect.y + cell.rect.h - 10, cell.rect.w - 8);
     const key = showKeys ? shelfKeyLabel(i) : null;
     if (key) {
-      ctx.fillStyle = "rgba(42,29,18,0.45)";
+      ctx.fillStyle = "rgba(232,220,200,0.45)";
       ctx.font = "800 10px Nunito, sans-serif";
       ctx.textAlign = "left";
       ctx.fillText(key, cell.rect.x + 6, cell.rect.y + 14);

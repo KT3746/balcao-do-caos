@@ -1,16 +1,16 @@
 :root {
-  --cream: #f7ecd4;
-  --ink: #2a1d12;
+  --cream: #e8dcc8;
+  --ink: #0e0a08;
   --terra: #c4491d;
   --leaf: #2f6b4f;
-  --wood: #7a4a28;
+  --wood: #3a2818;
   --gold: #e3b23c;
-  --panel: rgba(42, 29, 18, 0.78);
-  --panel-solid: #3b2618;
-  --text: #f7ecd4;
-  --muted: #d8c4a4;
+  --panel: rgba(18, 14, 10, 0.88);
+  --panel-solid: #1a1410;
+  --text: #e8dcc8;
+  --muted: #a89880;
   --danger: #c4491d;
-  --shadow: 0 16px 40px rgba(20, 10, 4, 0.4);
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
   --font-display: "Lilita One", "Arial Black", Impact, sans-serif;
   --font-ui: "Nunito", "Segoe UI", sans-serif;
   --safe-t: env(safe-area-inset-top, 0px);
@@ -32,7 +32,7 @@ body {
   height: 100dvh;
   max-height: 100dvh;
   overflow: hidden;
-  background: #2a1d12;
+  background: #0e0a08;
   color: var(--text);
   font-family: var(--font-ui);
   touch-action: pan-y;
@@ -432,29 +432,31 @@ h2 {
 .icon-btn {
   font-family: var(--font-ui);
   font-weight: 800;
-  border: 3px solid #2a1d12;
-  background: var(--cream);
-  color: var(--ink);
+  border: 3px solid #0a0806;
+  background: #2a2218;
+  color: var(--cream);
   border-radius: 14px;
   min-height: 52px;
   padding: 10px 18px;
-  box-shadow: 0 4px 0 #2a1d12;
+  box-shadow: 0 4px 0 #050403;
   cursor: pointer;
 }
 
 .btn.primary {
-  background: var(--gold);
+  background: #8a6a20;
+  color: #f7ecd4;
 }
 
 .btn.ghost {
-  background: rgba(247, 236, 212, 0.16);
+  background: rgba(232, 220, 200, 0.08);
   color: var(--cream);
-  border-color: rgba(247, 236, 212, 0.35);
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25);
+  border-color: rgba(232, 220, 200, 0.28);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
 }
 
 .btn.danger {
-  background: #e07a8d;
+  background: #8a3a48;
+  color: #f7ecd4;
 }
 
 .btn:active,
