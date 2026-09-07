@@ -494,6 +494,10 @@ h2 {
 }
 
 @media (max-width: 700px) {
+  /* Título do jogo some no celular — HUD mais baixo, mais espaço pra fila/prateleira. */
+  .hud-brand {
+    display: none !important;
+  }
   /* Flex + wrap: "Na mão" cai sozinho na linha de baixo e não cobre Pontos/Turno/vidas/botões. */
   .hud-row {
     display: flex;
