@@ -454,12 +454,19 @@ export class Game {
         break;
       case "deliver": {
         this.audio.cash();
-        if (ev.combo >= 3) this.audio.combo(ev.combo);
+        if (ev.combo >= 3) {
+          this.audio.combo(ev.combo);
+          this.buzz([12, 30, 18]);
+        } else {
+          this.buzz(18);
+        }
         this.popScore(ev.score, ev.combo, ev.customerId, at);
         break;
       }
       case "wrong": {
         this.audio.wrong();
+        this.buzz([30, 40, 45]);
+        if (this.run) this.run.shake = Math.max(this.run.shake, 12);
         const msg =
           TOASTS.wrong[Math.floor(Math.random() * TOASTS.wrong.length)] ?? "Ops. Era o outro.";
         this.toast(msg, 1500);
@@ -761,6 +768,14 @@ export class Game {
       // Mantém o painel sempre visível p/ a prateleira não encolher ao pegar item.
       hand.hidden = false;
       handName.textContent = this.run.holding ? PRODUCT_BY_ID[this.run.holding].short : "—";
+    }
+  }
+
+  private buzz(pattern: number | number[]): void {
+    try {
+      navigator.vibrate?.(pattern);
+    } catch {
+      /* ignore unsupported / blocked vibration */
     }
   }
 
