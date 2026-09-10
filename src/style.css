@@ -399,7 +399,7 @@ h2 {
 }
 
 .sheet {
-  background: rgba(247, 236, 212, 0.06);
+  background: rgba(20, 16, 12, 0.72);
   border: 1px solid rgba(227, 178, 60, 0.18);
   border-radius: 18px;
   padding: 16px 18px;
@@ -598,4 +598,26 @@ h2 {
   .screen {
     padding: calc(16px + var(--safe-t)) 16px calc(18px + var(--safe-b));
   }
+}
+
+
+/* Qualidade máxima — título e CTA */
+.title-screen h1 {
+  text-shadow: 0 2px 0 #050403, 0 0 28px rgba(227, 178, 60, 0.28);
+  letter-spacing: 0.02em;
+}
+.title-screen .lede {
+  max-width: 34em;
+  color: var(--muted);
+}
+.btn.primary:hover {
+  filter: brightness(1.08);
+}
+.sheet {
+  backdrop-filter: blur(4px);
+}
+.hud-cluster.left,
+.hud-cluster.right .icon-btn,
+.hud-hand {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
 }
