@@ -46,6 +46,29 @@ export class Sfx {
     o.stop(this.ctx.currentTime + dur + 0.02);
   }
 
+  private noiseBurst(dur: number, gain: number, delay = 0): void {
+    if (!this.ctx || !this.master || this.muted) return;
+    const t0 = this.ctx.currentTime + delay;
+    const len = Math.max(1, Math.floor(this.ctx.sampleRate * dur));
+    const buffer = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+    const src = this.ctx.createBufferSource();
+    src.buffer = buffer;
+    const g = this.ctx.createGain();
+    const f = this.ctx.createBiquadFilter();
+    f.type = "bandpass";
+    f.frequency.value = 1800;
+    f.Q.value = 0.8;
+    g.gain.setValueAtTime(gain, t0);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+    src.connect(f);
+    f.connect(g);
+    g.connect(this.master);
+    src.start(t0);
+    src.stop(t0 + dur + 0.02);
+  }
+
   private blip(freq: number, dur: number, type: OscillatorType, gain: number, delay = 0): void {
     if (!this.ctx || !this.master || this.muted) return;
     const t0 = this.ctx.currentTime + delay;
@@ -75,6 +98,7 @@ export class Sfx {
   }
 
   cash(): void {
+    this.noiseBurst(0.05, 0.04);
     this.blip(523, 0.06, "square", 0.055);
     this.blip(659, 0.08, "triangle", 0.05, 0.04);
     this.blip(784, 0.1, "triangle", 0.06, 0.08);
