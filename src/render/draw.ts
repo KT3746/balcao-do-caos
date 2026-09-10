@@ -39,7 +39,7 @@ export function drawShop(
   paintShelves(ctx, layout, run, t);
   if (run.chaos?.kind === "gato") drawCat(ctx, layout, run, t);
   drawParticles(ctx, run.particles, layout);
-  if (ghost) drawProduct(ctx, ghost.id, ghost.x, ghost.y, Math.min(72, layout.w * 0.12), t, true);
+  if (ghost) drawProduct(ctx, ghost.id, ghost.x, ghost.y, Math.min(84, layout.w * 0.14), t, true);
   if (run.chaos?.kind === "apagao") {
     ctx.fillStyle = "rgba(12, 8, 6, 0.46)";
     ctx.fillRect(0, 0, w, h);
@@ -149,7 +149,7 @@ function paintShelves(ctx: CanvasRenderingContext2D, layout: PlayLayout, run: Ru
     }
     const cx = cell.rect.x + cell.rect.w / 2;
     const cy = cell.rect.y + cell.rect.h * 0.36;
-    const size = Math.min(cell.rect.w, cell.rect.h) * 0.68;
+    const size = Math.min(cell.rect.w, cell.rect.h) * 0.72;
     drawProduct(ctx, cell.id, cx, cy, size, t, run.holding === cell.id);
     const p = PRODUCT_BY_ID[cell.id];
     const labelSize = Math.max(12, Math.min(16, cell.rect.w * 0.2));
@@ -501,27 +501,46 @@ export function drawProduct(
 }
 
 function bottle(ctx: CanvasRenderingContext2D, s: number, body: string, cap: string): void {
-  ctx.fillStyle = cap;
-  roundRect(ctx, -s * 0.1, -s * 0.42, s * 0.2, s * 0.12, 3);
-  ctx.fill();
   ctx.fillStyle = body;
-  roundRect(ctx, -s * 0.18, -s * 0.3, s * 0.36, s * 0.62, s * 0.12);
+  roundRect(ctx, -s * 0.2, -s * 0.3, s * 0.4, s * 0.64, s * 0.14);
   ctx.fill();
-  ctx.fillStyle = "rgba(255,255,255,0.25)";
-  ctx.fillRect(-s * 0.12, -s * 0.2, s * 0.08, s * 0.3);
+  ctx.strokeStyle = "rgba(0,0,0,0.35)";
+  ctx.lineWidth = Math.max(1.5, s * 0.04);
+  roundRect(ctx, -s * 0.2, -s * 0.3, s * 0.4, s * 0.64, s * 0.14);
+  ctx.stroke();
+  ctx.fillStyle = cap;
+  roundRect(ctx, -s * 0.11, -s * 0.44, s * 0.22, s * 0.14, 3);
+  ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,0.32)";
+  roundRect(ctx, -s * 0.12, -s * 0.18, s * 0.09, s * 0.34, 2);
+  ctx.fill();
 }
 
 function carton(ctx: CanvasRenderingContext2D, s: number, body: string, top: string): void {
   ctx.fillStyle = body;
-  roundRect(ctx, -s * 0.2, -s * 0.22, s * 0.4, s * 0.5, 4);
+  roundRect(ctx, -s * 0.22, -s * 0.2, s * 0.44, s * 0.52, 5);
   ctx.fill();
+  ctx.strokeStyle = "rgba(0,0,0,0.3)";
+  ctx.lineWidth = Math.max(1.5, s * 0.04);
+  roundRect(ctx, -s * 0.22, -s * 0.2, s * 0.44, s * 0.52, 5);
+  ctx.stroke();
   ctx.fillStyle = top;
-  ctx.fillRect(-s * 0.2, -s * 0.34, s * 0.4, s * 0.14);
+  roundRect(ctx, -s * 0.22, -s * 0.36, s * 0.44, s * 0.16, 3);
+  ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,0.18)";
+  ctx.fillRect(-s * 0.16, -s * 0.08, s * 0.1, s * 0.28);
 }
 
 function pack(ctx: CanvasRenderingContext2D, s: number, color: string): void {
   ctx.fillStyle = color;
-  roundRect(ctx, -s * 0.28, -s * 0.32, s * 0.56, s * 0.6, 8);
+  roundRect(ctx, -s * 0.3, -s * 0.34, s * 0.6, s * 0.64, 9);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(0,0,0,0.28)";
+  ctx.lineWidth = Math.max(1.5, s * 0.04);
+  roundRect(ctx, -s * 0.3, -s * 0.34, s * 0.6, s * 0.64, 9);
+  ctx.stroke();
+  ctx.fillStyle = "rgba(255,255,255,0.2)";
+  roundRect(ctx, -s * 0.22, -s * 0.26, s * 0.18, s * 0.12, 3);
   ctx.fill();
 }
 
@@ -611,7 +630,7 @@ function clamp01(v: number): number {
 export function hitProduct(layout: PlayLayout, run: Run, x: number, y: number): ProductId | null {
   const cells = applyShelfOrder(layout.cells, run.shelfOrder.length === layout.cells.length ? run.shelfOrder : layout.cells.map((c) => c.id));
   for (const cell of cells) {
-    if (!contains(cell.rect, x, y, 2)) continue;
+    if (!contains(cell.rect, x, y, 8)) continue;
     if (run.chaos?.kind === "gato") {
       const cx = layout.shelves.x + run.catX * layout.shelves.w;
       if (contains(cell.rect, cx, layout.catY, 18)) return null;
