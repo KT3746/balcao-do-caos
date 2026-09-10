@@ -31,7 +31,7 @@ function cacheBustPlugin(buildId: string): Plugin {
 const buildId = resolveBuildId();
 
 export default defineConfig({
-  base: "/mercadinho/",
+  base: "/grokbot-mercadinho/",
   define: {
     __BUILD_ID__: JSON.stringify(buildId),
   },
