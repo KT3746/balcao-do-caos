@@ -381,119 +381,181 @@ export function drawProduct(
   const bob = Math.sin(t * 3 + x * 0.01) * (glow ? 2 : 0.45);
   ctx.translate(0, bob);
   switch (id) {
-    case "guarana":
-      bottle(ctx, s, "#3d8f4a", "#e3b23c");
+    case "refri":
+      bottle(ctx, s, "#2f8f4a", "#e3b23c");
       leaf(ctx, s);
       break;
-    case "guaranaZero":
-      bottle(ctx, s, "#1f3d28", "#f6f3ea");
+    case "refriZero":
+      bottle(ctx, s, "#1a3324", "#d8d8d8");
       ctx.fillStyle = "#f6f3ea";
-      ctx.font = `800 ${s * 0.28}px Nunito`;
+      ctx.font = `800 ${s * 0.26}px Nunito`;
       ctx.textAlign = "center";
-      ctx.fillText("0", 0, s * 0.12);
+      ctx.fillText("0", 0, s * 0.1);
       break;
-    case "caju":
+    case "suco":
       carton(ctx, s, "#e07a2a", "#f6e27a");
       ctx.fillStyle = "#c4491d";
       ctx.beginPath();
-      ctx.arc(0, s * 0.05, s * 0.16, 0, Math.PI * 2);
+      ctx.arc(0, s * 0.06, s * 0.14, 0, Math.PI * 2);
       ctx.fill();
       break;
-    case "choco":
-      carton(ctx, s, "#6b3a24", "#f0c9a8");
-      ctx.fillStyle = "#f0c9a8";
-      ctx.beginPath();
-      ctx.arc(-s * 0.08, 0, s * 0.06, 0, Math.PI * 2);
-      ctx.arc(s * 0.08, 0, s * 0.06, 0, Math.PI * 2);
-      ctx.fill();
+    case "leite":
+      carton(ctx, s, "#f6f3ea", "#3b6fb6");
+      ctx.fillStyle = "#3b6fb6";
+      ctx.font = `800 ${s * 0.18}px Nunito`;
+      ctx.textAlign = "center";
+      ctx.fillText("L", 0, s * 0.12);
       break;
     case "agua":
-      bottle(ctx, s, "#9fd4ee", "#4d8fbf");
-      ctx.fillStyle = "rgba(255,255,255,0.7)";
+      bottle(ctx, s, "#9fd4ee", "#2f6b9a");
+      ctx.fillStyle = "rgba(255,255,255,0.75)";
       ctx.beginPath();
-      ctx.arc(-s * 0.08, s * 0.04, s * 0.06, 0, Math.PI * 2);
-      ctx.arc(s * 0.1, -s * 0.02, s * 0.05, 0, Math.PI * 2);
+      ctx.arc(-s * 0.06, 0, s * 0.05, 0, Math.PI * 2);
+      ctx.arc(s * 0.08, -s * 0.06, s * 0.04, 0, Math.PI * 2);
       ctx.fill();
       break;
-    case "lua":
+    case "pao": {
+      // pão francês
+      ctx.fillStyle = "#c68642";
+      ctx.beginPath();
+      ctx.ellipse(0, s * 0.04, s * 0.34, s * 0.16, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#e8c49a";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, s * 0.3, s * 0.13, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#a86a30";
+      ctx.lineWidth = Math.max(1.2, s * 0.03);
+      ctx.beginPath();
+      ctx.moveTo(-s * 0.18, -s * 0.02);
+      ctx.quadraticCurveTo(0, -s * 0.1, s * 0.18, -s * 0.02);
+      ctx.stroke();
+      break;
+    }
+    case "biscoito": {
+      // pilha de biscoitos redondos
+      for (const [ox, oy, r] of [[-0.12, 0.06, 0.16], [0.12, 0.08, 0.15], [0, -0.08, 0.17]]) {
+        ctx.fillStyle = "#d4a05a";
+        ctx.beginPath();
+        ctx.arc(s * ox, s * oy, s * r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#c4491d";
+        ctx.beginPath();
+        ctx.arc(s * ox, s * oy, s * r * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+    }
+    case "salgadinho": {
+      // pacote aberto de salgadinho
       pack(ctx, s, "#e3b23c");
-      ctx.fillStyle = "#f6f3ea";
-      ctx.beginPath();
-      ctx.arc(0, 0, s * 0.22, 0.2, Math.PI * 1.6);
+      ctx.fillStyle = "#c4491d";
+      roundRect(ctx, -s * 0.22, -s * 0.3, s * 0.44, s * 0.14, 3);
       ctx.fill();
-      break;
-    case "raio":
-      pack(ctx, s, "#d4551a");
       ctx.fillStyle = "#f6e27a";
+      for (let i = 0; i < 4; i++) {
+        const a = -0.4 + i * 0.28;
+        ctx.beginPath();
+        ctx.ellipse(s * a, s * 0.05, s * 0.07, s * 0.04, a, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+    }
+    case "chocolate": {
+      // barra segmentada
+      ctx.fillStyle = "#5a2a18";
+      roundRect(ctx, -s * 0.3, -s * 0.18, s * 0.6, s * 0.36, 4);
+      ctx.fill();
+      ctx.strokeStyle = "#3a1810";
+      ctx.lineWidth = Math.max(1.2, s * 0.03);
+      for (let i = 1; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.3 + (s * 0.6 * i) / 3, -s * 0.18);
+        ctx.lineTo(-s * 0.3 + (s * 0.6 * i) / 3, s * 0.18);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "#e3b23c";
+      roundRect(ctx, -s * 0.12, -s * 0.08, s * 0.24, s * 0.1, 2);
+      ctx.fill();
+      break;
+    }
+    case "ovos": {
+      // cartela com ovos
+      ctx.fillStyle = "#3d8f4a";
+      roundRect(ctx, -s * 0.32, -s * 0.22, s * 0.64, s * 0.44, 6);
+      ctx.fill();
+      ctx.fillStyle = "#f0e6c8";
+      for (const [ox, oy] of [[-0.14, -0.02], [0.14, -0.02], [0, 0.08]]) {
+        ctx.beginPath();
+        ctx.ellipse(s * ox, s * oy, s * 0.09, s * 0.12, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+    }
+    case "macarrao":
+      pack(ctx, s, "#f0c44c");
+      ctx.strokeStyle = "#c4491d";
+      ctx.lineWidth = Math.max(1.5, s * 0.035);
+      for (let i = -2; i <= 2; i++) {
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.2, i * s * 0.07);
+        ctx.quadraticCurveTo(0, i * s * 0.07 - s * 0.05, s * 0.2, i * s * 0.07);
+        ctx.stroke();
+      }
+      break;
+    case "arroz": {
+      // saco branco
+      ctx.fillStyle = "#f6f3ea";
+      roundRect(ctx, -s * 0.26, -s * 0.3, s * 0.52, s * 0.6, 8);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(0,0,0,0.25)";
+      ctx.lineWidth = Math.max(1.5, s * 0.035);
+      roundRect(ctx, -s * 0.26, -s * 0.3, s * 0.52, s * 0.6, 8);
+      ctx.stroke();
+      ctx.fillStyle = "#2f6b4f";
+      roundRect(ctx, -s * 0.18, -s * 0.08, s * 0.36, s * 0.2, 4);
+      ctx.fill();
+      break;
+    }
+    case "feijao": {
+      ctx.fillStyle = "#6b341f";
+      roundRect(ctx, -s * 0.26, -s * 0.3, s * 0.52, s * 0.6, 8);
+      ctx.fill();
+      ctx.fillStyle = "#c9a06a";
+      for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.ellipse(-s * 0.12 + (i % 3) * s * 0.12, -s * 0.05 + Math.floor(i / 3) * s * 0.14, s * 0.05, s * 0.035, 0.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+    }
+    case "cafe": {
+      pack(ctx, s, "#5a1810");
+      ctx.fillStyle = "#e3b23c";
       ctx.beginPath();
-      ctx.moveTo(-s * 0.05, -s * 0.22);
-      ctx.lineTo(s * 0.08, -s * 0.04);
-      ctx.lineTo(0, -s * 0.04);
-      ctx.lineTo(s * 0.06, s * 0.22);
-      ctx.lineTo(-s * 0.1, 0.02 * s);
-      ctx.lineTo(0, 0.02 * s);
-      ctx.closePath();
+      ctx.arc(0, -s * 0.02, s * 0.14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#5a1810";
+      ctx.beginPath();
+      ctx.arc(0, -s * 0.02, s * 0.07, 0, Math.PI * 2);
       ctx.fill();
       break;
-    case "pao":
-      pack(ctx, s, "#f3e1c2");
-      ctx.fillStyle = "#d8a07a";
-      roundRect(ctx, -s * 0.28, -s * 0.08, s * 0.56, s * 0.22, s * 0.1);
-      ctx.fill();
-      break;
+    }
     case "detergente":
       bottle(ctx, s, "#3b6fb6", "#f6f3ea");
-      sun(ctx, s * 0.18);
+      ctx.fillStyle = "#f6e27a";
+      ctx.beginPath();
+      ctx.moveTo(0, -s * 0.08);
+      ctx.lineTo(s * 0.1, s * 0.08);
+      ctx.lineTo(-s * 0.1, s * 0.08);
+      ctx.closePath();
+      ctx.fill();
       break;
     case "amaciante":
       bottle(ctx, s, "#e07a8d", "#f6f3ea");
       ctx.fillStyle = "#fff";
       ctx.beginPath();
-      ctx.arc(0, 0, s * 0.1, 0, Math.PI * 2);
-      ctx.fill();
-      break;
-    case "macarrao":
-      pack(ctx, s, "#f0c44c");
-      ctx.strokeStyle = "#c4491d";
-      ctx.lineWidth = 2;
-      for (let i = -2; i <= 2; i++) {
-        ctx.beginPath();
-        ctx.moveTo(-s * 0.2, i * s * 0.08);
-        ctx.quadraticCurveTo(0, i * s * 0.08 - s * 0.06, s * 0.2, i * s * 0.08);
-        ctx.stroke();
-      }
-      break;
-    case "leite":
-      carton(ctx, s, "#f6f3ea", "#4d8fbf");
-      break;
-    case "picole":
-      ctx.fillStyle = "#e8c4a0";
-      roundRect(ctx, -s * 0.07, s * 0.05, s * 0.14, s * 0.32, 3);
-      ctx.fill();
-      ctx.fillStyle = "#ff8a4a";
-      roundRect(ctx, -s * 0.16, -s * 0.32, s * 0.32, s * 0.4, 8);
-      ctx.fill();
-      break;
-    case "feijao":
-      ctx.fillStyle = "#8a4a2a";
-      roundRect(ctx, -s * 0.2, -s * 0.28, s * 0.4, s * 0.56, 6);
-      ctx.fill();
-      ctx.fillStyle = "#c9a06a";
-      ctx.fillRect(-s * 0.2, -s * 0.06, s * 0.4, s * 0.12);
-      break;
-    case "esponja":
-      ctx.fillStyle = "#c6d94e";
-      roundRect(ctx, -s * 0.28, -s * 0.16, s * 0.56, s * 0.22, 4);
-      ctx.fill();
-      ctx.fillStyle = "#5a8a3a";
-      roundRect(ctx, -s * 0.28, 0.02 * s, s * 0.56, s * 0.14, 4);
-      ctx.fill();
-      break;
-    case "cafe":
-      pack(ctx, s, "#7a1f16");
-      ctx.fillStyle = "#e3b23c";
-      ctx.beginPath();
-      ctx.arc(0, 0, s * 0.12, 0, Math.PI * 2);
+      ctx.ellipse(0, s * 0.02, s * 0.12, s * 0.08, 0, 0, Math.PI * 2);
       ctx.fill();
       break;
   }
@@ -548,13 +610,6 @@ function leaf(ctx: CanvasRenderingContext2D, s: number): void {
   ctx.fillStyle = "#1f5a32";
   ctx.beginPath();
   ctx.ellipse(s * 0.16, -s * 0.28, s * 0.1, s * 0.16, 0.5, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function sun(ctx: CanvasRenderingContext2D, r: number): void {
-  ctx.fillStyle = "#e3b23c";
-  ctx.beginPath();
-  ctx.arc(0, 0, r, 0, Math.PI * 2);
   ctx.fill();
 }
 

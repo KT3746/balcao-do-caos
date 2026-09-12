@@ -71,7 +71,7 @@ export class Screens {
             <p><b>4.</b> Quatro clientes furiosos encerram o expediente. O ritmo sobe a cada turno.</p>
             <p><b>Celular:</b> só o dedo. Toque vazio ou <b>Soltar</b> larga o item. Use <b>1x/2x/3x</b> no topo pra acelerar.</p>
             <p><b>Computador:</b> clique, arraste, ou teclas <b>1–8</b> (e Q W E R) nos produtos. <b>3</b> pega o terceiro item, não pausa. ← → escolhe o cliente, <b>Espaço</b> entrega no cliente marcado, <b>Esc</b> solta o item (ou pausa se a mão estiver vazia), botão direito também solta, M muda o som. O botão <b>1x/2x/3x</b> acelera o expediente.</p>
-            <p>Olho no sósia: <b>Pingo</b> não é <b>Pingo Zero</b>. <b>Detergente</b> não é <b>Amaciante</b>.</p>
+            <p>Olho no sósia: <b>Refri</b> não é <b>Refri Zero</b>. <b>Detergente</b> não é <b>Amaciante</b>.</p>
           </div>
         </div>
         <div class="screen-foot">

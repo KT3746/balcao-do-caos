@@ -88,7 +88,7 @@ export type Run = {
   lockQueue: boolean;
 };
 
-const easyFirst: ProductId[] = ["pao", "leite", "lua", "macarrao"];
+const easyFirst: ProductId[] = ["pao", "leite", "biscoito", "macarrao"];
 
 export function createRun(): Run {
   const unlocked = productsUnlocked(1).map((p) => p.id);
@@ -133,15 +133,15 @@ export function maxSlotsFor(turno: number): number {
 }
 
 export function spawnInterval(turno: number): number {
-  if (turno <= 1) return 10.5 + Math.random() * 1.4;
-  if (turno === 2) return 7.2 + Math.random() * 1.2;
-  if (turno === 3) return 5.8 + Math.random() * 1.0;
-  return Math.max(3.2, 5.4 - (turno - 3) * 0.35) + Math.random() * 0.7;
+  if (turno <= 1) return 8.6 + Math.random() * 1.2;
+  if (turno === 2) return 6.0 + Math.random() * 1.0;
+  if (turno === 3) return 4.8 + Math.random() * 0.9;
+  return Math.max(2.8, 4.6 - (turno - 3) * 0.35) + Math.random() * 0.6;
 }
 
 export function patienceFor(turno: number, items: number, special: boolean): number {
-  const base = turno <= 1 ? 52 : turno === 2 ? 34 : Math.max(16, 28 - turno * 1.4);
-  const extra = (items - 1) * 5.2;
+  const base = turno <= 1 ? 44 : turno === 2 ? 28 : Math.max(14, 24 - turno * 1.35);
+  const extra = (items - 1) * 4.4;
   return (base + extra) * (special ? 0.88 : 1);
 }
 
@@ -408,7 +408,7 @@ export function tick(run: Run, dt: number): SimEvent[] {
       c.anim = Math.min(1, c.anim + dt * 2.4);
       if (c.anim >= 1) c.mood = "wait";
     } else if (c.mood === "wait") {
-      const drain = run.turno <= 1 ? simDt * 0.32 : run.turno === 2 ? simDt * 0.72 : simDt * 0.88;
+      const drain = run.turno <= 1 ? simDt * 0.4 : run.turno === 2 ? simDt * 0.82 : simDt;
       c.patience -= drain;
       if (c.patience / c.patienceMax < 0.34 && c.phraseT <= 0) {
         const arch = ARCHETYPES.find((a) => a.id === c.arch);

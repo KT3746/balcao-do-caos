@@ -15,7 +15,7 @@ Atenda o **MERCADINHO** antes da paciência da fila acabar. Jogo **original** no
 
 Dá para **tocar** o produto e depois o cliente, ou **arrastar** o item até a pessoa. Combo aumenta se você acerta em sequência. Produto errado zera o combo e come paciência.
 
-Olho no sósia: **Guaraná Pingo** não é **Pingo Zero**. **Detergente Brilho** não é **Amaciante Brilho**.
+Olho no sósia: **Refri** não é **Refri Zero**. **Detergente** não é **Amaciante**.
 
 O jogo detecta celular e computador. No telefone, só o dedo. No desktop, mouse e teclado juntos.
 
