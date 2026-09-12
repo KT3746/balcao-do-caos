@@ -73,7 +73,7 @@ export const ARCHETYPES: readonly Archetype[] = [
     skin: "#c6865a",
     hairStyle: "cap",
     arrive: ["Rápido que o sinal abre.", "É pra levar na bagagem."],
-    wait: ["O picolé tá pensando em derreter.", "Buzinei sem querer. Foi o nervoso."],
+    wait: ["A fila tá pensando em derreter.", "Buzinei sem querer. Foi o nervoso."],
     wrong: ["Não era esse, chefia.", "Quase atropelo o pedido."],
     thanks: ["Valeu. Pedalei pra cá.", "Isso. Tô pago."],
     rage: ["Perdi o sinal. E a paciência.", "Vou de fome. De bike."],
