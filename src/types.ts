@@ -1,20 +1,20 @@
 export type ProductId =
-  | "guarana"
-  | "guaranaZero"
-  | "caju"
-  | "choco"
-  | "agua"
-  | "lua"
-  | "raio"
-  | "pao"
-  | "detergente"
-  | "amaciante"
-  | "macarrao"
+  | "refri"
+  | "refriZero"
+  | "suco"
   | "leite"
-  | "picole"
+  | "agua"
+  | "pao"
+  | "biscoito"
+  | "salgadinho"
+  | "chocolate"
+  | "ovos"
+  | "macarrao"
+  | "arroz"
   | "feijao"
-  | "esponja"
-  | "cafe";
+  | "cafe"
+  | "detergente"
+  | "amaciante";
 
 export type CustomerMood = "enter" | "wait" | "happy" | "leave" | "rage";
 

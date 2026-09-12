@@ -9,7 +9,7 @@ export const START_LIVES = 4;
 export const MAX_SLOTS = 4;
 export const MAX_COMBO = 12;
 export const COMBO_WINDOW = 3.8;
-export const TURNO_SECS = 75;
+export const TURNO_SECS = 62;
 export const BUILD_ID = typeof __BUILD_ID__ === "string" ? __BUILD_ID__ : "dev";
 
 export const layoutWidth = (): number => {
