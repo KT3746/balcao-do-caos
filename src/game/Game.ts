@@ -39,6 +39,8 @@ export class Game {
   private hud: HTMLElement;
   private hurtEl: HTMLElement | null = null;
   private dragging: ProductId | null = null;
+  /** 1 | 2 | 3 — acelerador do expediente */
+  private speedScale: 1 | 2 | 3 = 1;
   private pointerId: number | null = null;
   private cssW = 0;
   private cssH = 0;
@@ -91,6 +93,7 @@ export class Game {
       let dt = (now - this.last) / 1000;
       this.last = now;
       if (dt > 0.12) dt = 0.12;
+      if (this.view === "play") dt *= this.speedScale;
       try {
         this.tick(dt);
       } catch (err) {
@@ -160,22 +163,7 @@ export class Game {
   }
 
   private bind(): void {
-    const pauseBtn = document.getElementById("btn-pause");
-    const blockPause = (e: Event) => {
-      if (this.swallowPauseHit(e)) return;
-    };
-    pauseBtn?.addEventListener(
-      "click",
-      (e) => {
-        if (this.swallowPauseHit(e)) return;
-        this.handle({ type: "pause" });
-      },
-      true,
-    );
-    for (const type of ["pointerdown", "pointerup", "touchstart", "touchend"] as const) {
-      pauseBtn?.addEventListener(type, blockPause, true);
-    }
-    document.getElementById("btn-mute")?.addEventListener("click", () => this.handle({ type: "mute" }));
+    document.getElementById("btn-speed")?.addEventListener("click", () => this.cycleSpeed());
     document.getElementById("btn-drop")?.addEventListener("click", () => this.drop());
 
     this.canvas.addEventListener("contextmenu", (e) => {
@@ -604,6 +592,8 @@ export class Game {
   private play(): void {
     this.run = createRun();
     this.selected = null;
+    this.speedScale = 1;
+    this.syncSpeedBtn();
     this.view = "play";
     this.save.plays += 1;
     writeSave(this.save);
@@ -626,8 +616,7 @@ export class Game {
     this.ui.root.innerHTML = "";
     this.syncChrome();
     this.resize();
-    document.getElementById("btn-pause")?.blur();
-    document.getElementById("btn-mute")?.blur();
+    document.getElementById("btn-speed")?.blur();
     this.toast(
       wantsTouchCopy()
         ? "Toque no produto, depois no cliente. Ou arraste."
@@ -653,7 +642,7 @@ export class Game {
     this.ui.root.innerHTML = "";
     this.syncChrome();
     this.playGuard(300, 500);
-    document.getElementById("btn-pause")?.blur();
+    document.getElementById("btn-speed")?.blur();
   }
 
   private finish(): void {
@@ -741,6 +730,21 @@ export class Game {
     this.syncMuteButtons();
   }
 
+
+  private cycleSpeed(): void {
+    this.speedScale = this.speedScale === 1 ? 2 : this.speedScale === 2 ? 3 : 1;
+    this.syncSpeedBtn();
+    this.audio.click();
+  }
+
+  private syncSpeedBtn(): void {
+    const btn = document.getElementById("btn-speed");
+    if (!btn) return;
+    btn.textContent = `${this.speedScale}x`;
+    btn.setAttribute("aria-label", `Velocidade ${this.speedScale}x`);
+    btn.classList.toggle("speed-fast", this.speedScale > 1);
+  }
+
   private syncMuteButtons(): void {
     const label = this.save.muted ? "Som off" : "Som";
     const btn = document.getElementById("btn-mute");
@@ -749,6 +753,7 @@ export class Game {
 
   private syncHud(): void {
     if (!this.run) return;
+    this.syncSpeedBtn();
     const score = document.getElementById("hud-score");
     const combo = document.getElementById("hud-combo");
     const turno = document.getElementById("hud-turno");
