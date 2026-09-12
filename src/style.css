@@ -621,3 +621,9 @@ h2 {
 .hud-hand {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
 }
+
+#btn-speed.speed-fast {
+  background: linear-gradient(180deg, #b08a2e 0%, #8a6a20 100%);
+  color: #f7ecd4;
+  border-color: #3a2a08;
+}
